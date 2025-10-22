@@ -177,10 +177,10 @@ const PricingCard = ({ plan, billingCycle }) => {
       </div>
 
       {/* Features List */}
-      <ul className="space-y-4 flex-grow mb-8">
+      <ul className="space-y-4 grow mb-8">
         {features.map((feature, index) => (
           <li key={index} className="flex items-start">
-            <CheckIcon className="text-gray-900 dark:text-gray-100 mr-3 mt-1 flex-shrink-0" />
+            <CheckIcon className="text-gray-900 dark:text-gray-100 mr-3 mt-1 shrink-0" />
             <span className="text-gray-700 dark:text-gray-300">{feature}</span>
           </li>
         ))}
