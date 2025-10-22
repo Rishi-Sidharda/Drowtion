@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Geist_Mono } from "next/font/google";
 
+import { signInWithGitHub, signInWithGoogle } from "@/lib/authActions";
+
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -51,10 +53,6 @@ export default function SignupPage() {
     }
   };
 
-  const handleOAuthSignup = async (provider) => {
-    await supabase.auth.signInWithOAuth({ provider });
-  };
-
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div
@@ -81,7 +79,7 @@ export default function SignupPage() {
             <Button
               variant="outline"
               className="flex-1 items-center justify-center space-x-2 py-2"
-              onClick={() => handleOAuthSignup("github")}
+              onClick={signInWithGitHub}
             >
               <GitHubIcon className="size-5" aria-hidden={true} />
               <span className="text-sm font-medium">Signup with GitHub</span>
@@ -89,7 +87,7 @@ export default function SignupPage() {
             <Button
               variant="outline"
               className="mt-2 flex-1 items-center justify-center space-x-2 py-2 sm:mt-0"
-              onClick={() => handleOAuthSignup("google")}
+              onClick={signInWithGoogle}
             >
               <GoogleIcon className="size-4" aria-hidden={true} />
               <span className="text-sm font-medium">Signup with Google</span>

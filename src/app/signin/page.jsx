@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Geist_Mono } from "next/font/google";
+import { signInWithGitHub, signInWithGoogle } from "@/lib/authActions";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -77,23 +78,13 @@ export default function Signin() {
 
           <div className="mt-8 flex flex-col items-center space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">
             <Button variant="outline" className="flex-1 space-x-2 py-2" asChild>
-              <a
-                href="#"
-                onClick={() =>
-                  supabase.auth.signInWithOAuth({ provider: "github" })
-                }
-              >
+              <a href="#" onClick={signInWithGitHub}>
                 <GitHubIcon className="size-5" />
                 <span className="text-sm font-medium">Login with GitHub</span>
               </a>
             </Button>
             <Button variant="outline" className="flex-1 space-x-2 py-2" asChild>
-              <a
-                href="#"
-                onClick={() =>
-                  supabase.auth.signInWithOAuth({ provider: "google" })
-                }
-              >
+              <a href="#" onClick={signInWithGoogle}>
                 <GoogleIcon className="size-4" />
                 <span className="text-sm font-medium">Login with Google</span>
               </a>
