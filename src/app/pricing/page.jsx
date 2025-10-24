@@ -202,47 +202,66 @@ const Pricing = () => {
   const [billingCycle, setBillingCycle] = useState("monthly");
 
   return (
-    <div
-      className={`${geistMono.variable} font-sans min-h-screen bg-gray-50 dark:bg-gray-950 p-4 sm:p-8`}
-    >
-      <div className="max-w-6xl mx-auto">
-        {/* Header Section */}
-        <header className="text-center mb-10 pt-6">
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 dark:text-white mb-4">
-            Simple, Transparent Pricing
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Choose the plan that fits your needs and start building today.
-          </p>
+    <div className="min-h-screen w-full bg-[#f8fafc] relative">
+      {/* Soft Morning Mist Background */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `
+        linear-gradient(135deg, 
+          rgba(248,250,252,1) 0%, 
+          rgba(219,234,254,0.7) 30%, 
+          rgba(165,180,252,0.5) 60%, 
+          rgba(129,140,248,0.6) 100%
+        ),
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.6) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(199,210,254,0.4) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(224,231,255,0.3) 0%, transparent 60%)
+      `,
+        }}
+      />
+      <div
+        className={`${geistMono.variable} font-sans min-h-screen bg-gray-50 dark:bg-gray-950 p-4 sm:p-8`}
+      >
+        <div className="max-w-6xl mx-auto">
+          {/* Header Section */}
+          <header className="text-center mb-10 pt-6">
+            <h1 className="text-3xl sm:text-5xl font-extrabold text-black dark:text-white mb-4">
+              Simple, Transparent Pricing
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Choose the plan that fits your needs and start building today.
+            </p>
 
-          {/* Billing Toggle */}
-          <BillingToggle
-            billingCycle={billingCycle}
-            setBillingCycle={setBillingCycle}
-          />
-        </header>
+            {/* Billing Toggle */}
+            <BillingToggle
+              billingCycle={billingCycle}
+              setBillingCycle={setBillingCycle}
+            />
+          </header>
 
-        {/* Pricing Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 items-center">
-          {plans.map((plan) => (
-            <div key={plan.name} className="h-full relative">
-              <PricingCard plan={plan} billingCycle={billingCycle} />
-            </div>
-          ))}
+          {/* Pricing Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 items-center">
+            {plans.map((plan) => (
+              <div key={plan.name} className="h-full relative">
+                <PricingCard plan={plan} billingCycle={billingCycle} />
+              </div>
+            ))}
+          </div>
+
+          {/* Footer/FAQ space */}
+          <footer className="mt-20 text-center">
+            <p className="text-gray-500 dark:text-gray-400">
+              Need a custom plan?{" "}
+              <a
+                href="#"
+                className="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
+              >
+                Contact our sales team.
+              </a>
+            </p>
+          </footer>
         </div>
-
-        {/* Footer/FAQ space */}
-        <footer className="mt-20 text-center">
-          <p className="text-gray-500 dark:text-gray-400">
-            Need a custom plan?{" "}
-            <a
-              href="#"
-              className="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
-            >
-              Contact our sales team.
-            </a>
-          </p>
-        </footer>
       </div>
     </div>
   );
