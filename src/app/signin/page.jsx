@@ -54,7 +54,6 @@ export default function Signin() {
     if (error) {
       setErrorMsg(error.message);
     } else if (data?.user) {
-      await ensureUserProfile(data.user);
       router.push("/dashboard"); // redirect after sign in
     }
   };

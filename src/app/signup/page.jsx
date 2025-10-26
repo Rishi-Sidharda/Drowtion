@@ -53,7 +53,6 @@ export default function SignupPage() {
     if (error) {
       setErrorMsg(error.message);
     } else if (data?.user) {
-      ensureUserProfile(data.user);
       alert("✅ Check your email to confirm your account!");
     }
   };

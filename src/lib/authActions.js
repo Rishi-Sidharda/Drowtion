@@ -51,13 +51,6 @@ export async function signInWithGitHub() {
 
     if (error) throw error;
 
-    // Listen for sign-in event (this happens after redirect)
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN") {
-        await ensureUserProfile(session.user);
-      }
-    });
-
     return data;
   } catch (err) {
     console.error("GitHub Auth Error:", err.message);
@@ -76,13 +69,6 @@ export async function signInWithGoogle() {
     });
 
     if (error) throw error;
-
-    // Listen for sign-in event
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN") {
-        await ensureUserProfile(session.user);
-      }
-    });
 
     return data;
   } catch (err) {
