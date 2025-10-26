@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Geist_Mono } from "next/font/google";
-import { signInWithGitHub, signInWithGoogle } from "@/lib/authActions";
+import {
+  signInWithGitHub,
+  signInWithGoogle,
+  ensureUserProfile,
+} from "@/lib/authActions";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -40,7 +44,7 @@ export default function Signin() {
     const email = e.target["email-login-04"].value;
     const password = e.target["password-login-04"].value;
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -49,7 +53,8 @@ export default function Signin() {
 
     if (error) {
       setErrorMsg(error.message);
-    } else {
+    } else if (data?.user) {
+      await ensureUserProfile(data.user);
       router.push("/dashboard"); // redirect after sign in
     }
   };

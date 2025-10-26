@@ -8,7 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Geist_Mono } from "next/font/google";
 
-import { signInWithGitHub, signInWithGoogle } from "@/lib/authActions";
+import {
+  signInWithGitHub,
+  signInWithGoogle,
+  ensureUserProfile,
+} from "@/lib/authActions";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -48,7 +52,8 @@ export default function SignupPage() {
 
     if (error) {
       setErrorMsg(error.message);
-    } else {
+    } else if (data?.user) {
+      ensureUserProfile(data.user);
       alert("✅ Check your email to confirm your account!");
     }
   };
