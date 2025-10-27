@@ -19,7 +19,7 @@ const Excalidraw = dynamic(
           alignItems: "center",
         }}
       >
-        Loading Sketchpad...
+        Loading board...
       </div>
     ),
   }
@@ -96,7 +96,10 @@ export default function FixedRectBoard() {
 
       {/* Excalidraw canvas */}
       {/* ✅ Key fix: Pass the setApi function to the excalidrawAPI prop */}
-      <Excalidraw excalidrawAPI={(excalidrawApi) => setApi(excalidrawApi)} />
+      <Excalidraw
+        theme={"dark"}
+        excalidrawAPI={(excalidrawApi) => setApi(excalidrawApi)}
+      />
     </div>
   );
 }
