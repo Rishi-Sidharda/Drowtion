@@ -40,18 +40,42 @@ export default function FixedRectBoard() {
     // Use the simplified element structure (ExcalidrawElementSkeleton)
     const newElementsSkeleton = [
       {
-        type: "rectangle",
+        // Key Change: Set type to "text"
+        type: "text",
+        // Key Change: Add the content for the text element
+        text: `Hello Gemini! (${new Date().toLocaleTimeString()})`,
+        // Position the text randomly
         x: 100 + Math.random() * 200,
         y: 100 + Math.random() * 200,
-        width: 200,
-        height: 100,
-        strokeColor: "#1e1e1e",
-        backgroundColor: "#d3e3fd",
-        fillStyle: "solid",
+        // Text specific properties
+        fontSize: 28,
+        fontFamily: 1, // 1: Kiro (default), 2: Virgil, 3: Cascadia (Monospace)
+        textAlign: "left",
+        verticalAlign: "top",
+        strokeColor: "#FFFFFFF", // A nice forest green color
+        backgroundColor: "transparent",
         strokeWidth: 2,
         roughness: 1,
         opacity: 100,
-        // No need to manually provide 'id', 'version', 'versionNonce', etc.
+      },
+      {
+        // Key Change: Set type to "text"
+        type: "text",
+        // Key Change: Add the content for the text element
+        text: `Hello Nigga`,
+        // Position the text randomly
+        x: 200 + Math.random() * 200,
+        y: 200 + Math.random() * 200,
+        // Text specific properties
+        fontSize: 28,
+        fontFamily: 1, // 1: Kiro (default), 2: Virgil, 3: Cascadia (Monospace)
+        textAlign: "left",
+        verticalAlign: "top",
+        strokeColor: "#FFFFFFF", // A nice forest green color
+        backgroundColor: "transparent",
+        strokeWidth: 2,
+        roughness: 1,
+        opacity: 100,
       },
     ];
 
@@ -63,13 +87,6 @@ export default function FixedRectBoard() {
     api.updateScene({
       elements: [...api.getSceneElements(), ...newElements],
     });
-
-    // OR, if you use a full Excalidraw element object (like your original `rect`),
-    // the simpler api.addElements() call should technically work for single additions:
-    // api.addElements(newElements);
-
-    // However, for maximum compatibility and when working with other state data,
-    // using updateScene is generally preferred.
   }, [api]); // Recreate callback when 'api' changes
 
   return (
