@@ -30,7 +30,7 @@ export default function FixedRectBoard() {
   const [api, setApi] = useState(null);
 
   // 🟦 Draw a rectangle using the correct API method
-  const handleAddRectangle = useCallback(async () => {
+  const handleCommandPallet = useCallback(async () => {
     if (!api) return;
 
     const { convertToExcalidrawElements } = await import(
@@ -108,13 +108,13 @@ export default function FixedRectBoard() {
           renderTopRightUI={() => {
             return (
               <button
-                onClick={handleAddRectangle}
+                onClick={handleCommandPallet}
                 className="text-xs"
                 style={{
                   top: "16px",
                   right: "16px",
                   zIndex: 10,
-                  background: "#007bff",
+                  background: "#2c2c2c",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
@@ -123,7 +123,7 @@ export default function FixedRectBoard() {
                   boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
                 }}
               >
-                Add Rectangle
+                Add Component
               </button>
             );
           }}
