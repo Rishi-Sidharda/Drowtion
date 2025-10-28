@@ -90,33 +90,46 @@ export default function FixedRectBoard() {
   }, [api]); // Recreate callback when 'api' changes
 
   return (
-    <div style={{ position: "relative", height: "100vh" }}>
-      {/* Floating button */}
-      <button
-        onClick={handleAddRectangle}
+    <div style={{ display: "flex", height: "100vh" }}>
+      {/* Left Sidebar (3% width) */}
+      <div
         style={{
-          position: "absolute",
-          top: "16px",
-          right: "16px",
-          zIndex: 10,
-          background: "#007bff",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
-          padding: "8px 12px",
-          cursor: "pointer",
-          boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+          width: "2%",
+          backgroundColor: "#1e1e1e", // optional, just to visualize
+          height: "100%",
         }}
-      >
-        ➕ Add Rectangle
-      </button>
+      ></div>
 
-      {/* Excalidraw canvas */}
-      {/* ✅ Key fix: Pass the setApi function to the excalidrawAPI prop */}
-      <Excalidraw
-        theme={"dark"}
-        excalidrawAPI={(excalidrawApi) => setApi(excalidrawApi)}
-      />
+      {/* Right Side - Excalidraw Canvas (97% width) */}
+      <div style={{ position: "relative", width: "98%", height: "100vh" }}>
+        {/* Excalidraw canvas */}
+        <Excalidraw
+          theme="dark"
+          renderTopRightUI={() => {
+            return (
+              <button
+                onClick={handleAddRectangle}
+                className="text-xs"
+                style={{
+                  top: "16px",
+                  right: "16px",
+                  zIndex: 10,
+                  background: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 10px",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+                }}
+              >
+                Add Rectangle
+              </button>
+            );
+          }}
+          excalidrawAPI={(excalidrawApi) => setApi(excalidrawApi)}
+        />
+      </div>
     </div>
   );
 }
