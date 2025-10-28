@@ -27,7 +27,7 @@ const Excalidraw = dynamic(
   }
 );
 
-export default function FixedRectBoard() {
+export default function Board() {
   // 1. State to hold the Excalidraw API instance
   const [api, setApi] = useState(null);
 
@@ -40,7 +40,7 @@ export default function FixedRectBoard() {
     );
 
     // Convert the simplified structure into full Excalidraw elements
-    const newElements = convertToExcalidrawElements(generateElements("Nigga"));
+    const newElements = convertToExcalidrawElements(generateElements());
 
     api.updateScene({
       elements: [...api.getSceneElements(), ...newElements],
