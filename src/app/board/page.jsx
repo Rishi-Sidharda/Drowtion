@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import React, { useState, useCallback, useEffect } from "react";
 import "@excalidraw/excalidraw/index.css";
+import { generateElements } from "./generateElements";
+
 // ✅ Import the utility function for element creation
 
 // Dynamically import Excalidraw (no SSR)
@@ -37,53 +39,9 @@ export default function FixedRectBoard() {
       "@excalidraw/excalidraw"
     );
 
-    // Use the simplified element structure (ExcalidrawElementSkeleton)
-    const newElementsSkeleton = [
-      {
-        // Key Change: Set type to "text"
-        type: "text",
-        // Key Change: Add the content for the text element
-        text: `Hello Gemini! (${new Date().toLocaleTimeString()})`,
-        // Position the text randomly
-        x: 100 + Math.random() * 200,
-        y: 100 + Math.random() * 200,
-        // Text specific properties
-        fontSize: 28,
-        fontFamily: 1, // 1: Kiro (default), 2: Virgil, 3: Cascadia (Monospace)
-        textAlign: "left",
-        verticalAlign: "top",
-        strokeColor: "#FFFFFFF", // A nice forest green color
-        backgroundColor: "transparent",
-        strokeWidth: 2,
-        roughness: 1,
-        opacity: 100,
-      },
-      {
-        // Key Change: Set type to "text"
-        type: "text",
-        // Key Change: Add the content for the text element
-        text: `Hello`,
-        // Position the text randomly
-        x: 200 + Math.random() * 200,
-        y: 200 + Math.random() * 200,
-        // Text specific properties
-        fontSize: 28,
-        fontFamily: 1, // 1: Kiro (default), 2: Virgil, 3: Cascadia (Monospace)
-        textAlign: "left",
-        verticalAlign: "top",
-        strokeColor: "#FFFFFFF", // A nice forest green color
-        backgroundColor: "transparent",
-        strokeWidth: 2,
-        roughness: 1,
-        opacity: 100,
-      },
-    ];
-
     // Convert the simplified structure into full Excalidraw elements
-    const newElements = convertToExcalidrawElements(newElementsSkeleton);
+    const newElements = convertToExcalidrawElements(generateElements("Nigga"));
 
-    // ✅ Key fix: Use updateScene to add elements to the existing set
-    // This is the most reliable way to dynamically draw.
     api.updateScene({
       elements: [...api.getSceneElements(), ...newElements],
     });
