@@ -65,7 +65,7 @@ export default function Board() {
           alignItems: "center",
         }}
       >
-        Preparing board...
+        Preparing canvas...
       </div>
     );
   }
