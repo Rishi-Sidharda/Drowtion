@@ -2,7 +2,7 @@
 
 import React from "react";
 
-export default function FloatingCard({ title, children, onClose }) {
+export default function FloatingNotion({ title, children, onClose }) {
   return (
     <div
       style={{

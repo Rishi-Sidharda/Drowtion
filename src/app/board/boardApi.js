@@ -8,7 +8,7 @@ export const setExcalidrawApi = (api) => {
 export const getExcalidrawApi = () => excalidrawApi;
 
 // The same function you want globally accessible
-export const handleCommandPallet = async () => {
+export const drawExcalidrawElements = async () => {
   if (!excalidrawApi) return;
 
   const { convertToExcalidrawElements } = await import(

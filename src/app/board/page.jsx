@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import React, { useState, useEffect } from "react";
 import "@excalidraw/excalidraw/index.css";
-import { setExcalidrawApi, handleCommandPallet } from "./boardApi";
-import FloatingCard from "./floatingCard";
+import { setExcalidrawApi, drawExcalidrawElements } from "./boardApi";
+import FloatingNotion from "./floatingNotion";
 import CommandPallet from "./commandPallet";
 
 const Excalidraw = dynamic(
@@ -44,7 +44,7 @@ export default function Board() {
 
       if (isControlKey && isForwardSlash) {
         event.preventDefault();
-        handleCommandPallet();
+        setShowCommandPallet(true);
       }
     };
 
