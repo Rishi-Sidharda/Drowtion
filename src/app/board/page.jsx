@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "@excalidraw/excalidraw/index.css";
 import { setExcalidrawApi, handleCommandPallet } from "./boardApi";
 
@@ -26,12 +26,6 @@ const Excalidraw = dynamic(
 
 export default function Board() {
   const [api, setApi] = useState(null);
-  const [isClient, setIsClient] = useState(false);
-
-  // ✅ Run only on client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     if (api) setExcalidrawApi(api);
@@ -53,22 +47,6 @@ export default function Board() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [api]);
-
-  // 🟩 Render nothing on the server
-  if (!isClient) {
-    return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        Preparing canvas...
-      </div>
-    );
-  }
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
