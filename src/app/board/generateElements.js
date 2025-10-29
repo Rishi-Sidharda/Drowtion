@@ -16,8 +16,7 @@ export function generateElements(customText) {
 
   return [
     {
-      type: "text",
-      text: `${customText} (${timeStamp})`,
+      type: "rectangle",
       x: 100 + Math.random() * 200,
       y: 100 + Math.random() * 200,
       ...commonProps,
