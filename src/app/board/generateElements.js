@@ -22,7 +22,7 @@ export function generateElements(customText) {
       ...commonProps,
     },
     {
-      type: "text",
+      type: "circle",
       // This second element can have fixed or different content/properties
       text: `Fixed Secondary Note`,
       x: 200 + Math.random() * 200,
