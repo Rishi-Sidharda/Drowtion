@@ -102,12 +102,7 @@ export default function Board() {
           <FloatingNotion
             title="Custom Floating Card"
             onClose={() => setShowFloatingNotion(false)}
-          >
-            <p style={{ opacity: 0.8 }}>
-              This is a reusable floating card component. You can add any JSX
-              content here — forms, controls, text, or even other components.
-            </p>
-          </FloatingNotion>
+          ></FloatingNotion>
         )}
       </div>
     </div>

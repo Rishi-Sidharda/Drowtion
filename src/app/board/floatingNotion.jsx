@@ -1,8 +1,25 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 export default function FloatingNotion({ title, children, onClose }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // if click target is NOT inside the container, call onClose
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        onClose?.();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
   return (
     <div
       style={{
@@ -21,11 +38,12 @@ export default function FloatingNotion({ title, children, onClose }) {
       }}
     >
       <div
+        ref={containerRef}
         style={{
           width: "70%",
           height: "90%",
           backgroundColor: "#1e1e1e",
-          borderRadius: "12px",
+          borderRadius: "10px",
           boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
           color: "white",
           padding: "24px",
@@ -35,30 +53,7 @@ export default function FloatingNotion({ title, children, onClose }) {
           position: "relative",
         }}
       >
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          {title && (
-            <h2 style={{ fontSize: "1.5rem", marginBottom: "16px" }}>
-              {title}
-            </h2>
-          )}
-          {children}
-        </div>
-
-        <div style={{ textAlign: "right", marginTop: "16px" }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: "#ff4757",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "10px 16px",
-              cursor: "pointer",
-            }}
-          >
-            Close
-          </button>
-        </div>
+        {children}
       </div>
     </div>
   );
