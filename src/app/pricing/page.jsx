@@ -115,6 +115,10 @@ const BillingToggle = ({ billingCycle, setBillingCycle }) => {
   );
 };
 
+const processpayment = async () => {
+  subscribe();
+};
+
 // Reusable Card component (simulating shadcn Card)
 const PricingCard = ({ plan, billingCycle }) => {
   const {
