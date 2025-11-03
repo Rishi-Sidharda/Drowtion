@@ -4,6 +4,7 @@ import React, { useRef, useEffect } from "react";
 export default function FloatingCard({ onClose }) {
   const containerRef = useRef(null);
 
+  // Optional: close when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -36,20 +37,16 @@ export default function FloatingCard({ onClose }) {
       <div
         ref={containerRef}
         style={{
-          width: "70%",
-          maxWidth: "900px",
+          width: "50%",
           height: "90%",
-          backgroundColor: "#191919",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
+          backgroundColor: "#101010",
+          borderRadius: "12px",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+          padding: "40px",
+          overflowY: "auto",
+          fontFamily: "Inter, sans-serif",
         }}
-      >
-        <div style={{ padding: "48px 96px", overflowY: "auto", flex: 1 }}>
-          {/* Your content goes here */}
-        </div>
-      </div>
+      ></div>
     </div>
   );
 }
