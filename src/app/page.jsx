@@ -1,9 +1,15 @@
 "use client";
+import FloatingImage from "./floatingImage";
 import Pricing from "./pricing/page";
 
 export default function Home() {
   return (
     <div className="min-h-screen w-full bg-[#121212] text-white font-sans">
+      <FloatingImage src="file.svg" size={120} speed={0.7} />
+      <FloatingImage src="next.svg" size={120} speed={0.7} />
+      <FloatingImage src="vercel.svg" size={120} speed={0.7} />
+      <FloatingImage src="globe.svg" size={120} speed={0.7} />
+      <FloatingImage src="window.svg" size={120} speed={0.7} />
       {/* Navbar */}
       <nav className="flex items-center font-mono justify-between px-8 py-6 relative">
         {/* Left: Logo */}
@@ -49,9 +55,30 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="flex  flex-col items-center justify-center text-center mt-[15vh] px-4">
-        <h1 className="text-5xl font-mono md:text-7xl font-bold mb-6 leading-normal">
+        <h1 className="text-5xl md:text-8xl font-mono font-extrabold mb-6 leading-tight tracking-tighter bg-clip-text text-transparent animate-breathe">
           Draw Your Thoughts <br /> Write Your Mind_
         </h1>
+
+        <style jsx>{`
+          @keyframes breathe {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
+
+          .animate-breathe {
+            background-image: linear-gradient(90deg, white, #ff8383, white);
+            background-size: 200% 200%;
+            animation: breathe 11s ease-in-out infinite;
+          }
+        `}</style>
+
         <p className="text-gray-400 text-lg font-mono md:text-xl mb-8 max-w-2xl">
           "From doodles to documentation, your ideas live here."
         </p>
@@ -59,13 +86,13 @@ export default function Home() {
         <div className="flex space-x-4 font-mono">
           <a
             href="#get-started"
-            className="bg-white text-black px-8 py-4 font-semibold text-lg hover:bg-gray-200 transition-colors"
+            className="bg-white text-black rounded-full px-8 py-4 font-semibold text-lg hover:bg-[#ff8383] transition-colors"
           >
             Get Started
           </a>
           <a
             href="#features"
-            className="bg-gray-800 text-white px-8 py-4 font-semibold text-lg hover:bg-gray-700 transition-colors"
+            className="bg-gray-800 text-white rounded-full px-8 py-4 font-semibold text-lg hover:bg-gray-700 transition-colors"
           >
             Why Tenshin
           </a>
