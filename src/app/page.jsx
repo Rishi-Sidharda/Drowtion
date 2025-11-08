@@ -1,6 +1,6 @@
 "use client";
 import FloatingImage from "./floatingImage";
-import Pricing from "./pricing/page";
+import Pricing from "./pricingPage";
 
 export default function Home() {
   return (
@@ -25,12 +25,24 @@ export default function Home() {
           <a
             href="#features"
             className="text-gray-400 hover:text-[#ff8383] transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .querySelector("#features")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
           >
             Features
           </a>
           <a
             href="#pricing"
             className="text-gray-400 hover:text-[#ff8383] transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              document
+                .querySelector("#pricing")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
           >
             Pricing
           </a>
@@ -54,7 +66,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="flex  flex-col items-center justify-center text-center mt-[15vh] px-4">
+      <section className="flex  flex-col items-center justify-center text-center mt-[5vh] px-4">
         <h1 className="text-5xl md:text-8xl font-mono font-extrabold mb-6 leading-tight tracking-tighter bg-clip-text text-transparent animate-breathe">
           Draw Your Thoughts <br /> Write Your Mind_
         </h1>
@@ -91,42 +103,52 @@ export default function Home() {
             Get Started
           </a>
           <a
-            href="#features"
+            href="/board"
             className="bg-gray-800 text-white rounded-full px-8 py-4 font-semibold text-lg hover:bg-gray-700 transition-colors"
           >
-            Why Tenshin
+            Try now
           </a>
         </div>
       </section>
 
-      {/* Optional Features Section */}
       <section
         id="features"
-        className="font-mono h-screen mt-[10vh] py-20 px-8 max-w-6xl mx-auto"
+        className="font-mono opacity-100  mt-[5vh] py-20 px-8 max-w-6xl mx-auto"
       >
+        <h2 className="text-3xl font-bold text-white text-center mb-12">
+          Exclusive Features
+        </h2>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-[#1A1A1A] p-6 rounded-xl shadow-lg text-center">
-            <h3 className="text-xl font-semibold mb-4">
-              Realtime Collaboration
-            </h3>
+            <h3 className="text-xl font-semibold mb-4">Markdown Integration</h3>
             <p className="text-gray-400">
-              Work with your team in real-time, just like Google Docs.
+              Seamlessly combine diagrams with Markdown notes. Add context, code
+              snippets, tasks, and rich formatting directly into your visual
+              workspace, keeping all your ideas connected in one place.
             </p>
           </div>
           <div className="bg-[#1A1A1A] p-6 rounded-xl shadow-lg text-center">
-            <h3 className="text-xl font-semibold mb-4">Easy Exports</h3>
+            <h3 className="text-xl font-semibold mb-4">Visual Second Brain</h3>
             <p className="text-gray-400">
-              Export diagrams as PNG, SVG, or shareable links.
+              Your dashboard transforms into a personal knowledge hub. Organize
+              notes, diagrams, and projects visually, link ideas, and navigate
+              effortlessly — making it easy to think, plan, and recall
+              information.
             </p>
           </div>
           <div className="bg-[#1A1A1A] p-6 rounded-xl shadow-lg text-center">
-            <h3 className="text-xl font-semibold mb-4">Custom Themes</h3>
+            <h3 className="text-xl font-semibold mb-4">Instant Context</h3>
             <p className="text-gray-400">
-              Customize colors, fonts, and styles for your diagrams.
+              Keep all your ideas connected. Hover or click on any diagram
+              element to see linked notes, references, and related content
+              instantly — so you always have the full picture at your
+              fingertips.
             </p>
           </div>
         </div>
       </section>
+
       <section id="pricing" className="h-screen">
         <Pricing />
       </section>
