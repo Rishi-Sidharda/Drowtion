@@ -48,7 +48,7 @@ const plans = [
     features: [
       "Everything in Free",
       "Real-time cloud sync",
-      "Access from any device/browser",
+      "Access from any device",
       "Share boards via link",
       "Priority email support",
       "Fully Ad Free",
