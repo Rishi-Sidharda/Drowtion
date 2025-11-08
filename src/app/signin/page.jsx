@@ -65,7 +65,12 @@ export default function Signin() {
         className={`flex flex-1 z-20 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-mono`}
       >
         <div className="w-full max-w-xl bg-[#1a1a1a]  rounded-2xl shadow-black shadow-2xl p-10">
-          <div className="flex items-center space-x-1.5">
+          <div
+            onClick={() => {
+              window.location.href = "/";
+            }}
+            className="flex cursor-pointer items-center space-x-1.5"
+          >
             <div className="w-8 h-8 bg-white rounded-full mr-2 flex items-center justify-center">
               <img src="/logo_sm.svg" className="rounded-md" alt="" />
             </div>
