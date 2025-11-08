@@ -37,9 +37,9 @@ export default function Home() {
       {/* Navbar */}
       <nav className="flex items-center justify-between px-4 md:px-8 py-6 relative">
         {/* Logo */}
-        <div className="flex items-center space-x-2">
+        <div className="flex  items-center space-x-2">
           <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-            <span className="text-black font-bold">T</span>
+            <img src="/logo_sm.svg" className="rounded-md" alt="" />
           </div>
           <span className="font-semibold font-mono text-lg">Tenshin</span>
         </div>
