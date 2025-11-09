@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import FloatingImage from "./floatingImage";
-import Pricing from "./pricingPage";
+import Pricing from "./pricing/page";
 import { FaArrowUp, FaBars, FaTimes } from "react-icons/fa";
 
 export default function Home() {
@@ -228,7 +228,7 @@ export default function Home() {
 
       {/* Pricing Section */}
       <section id="pricing" className="h-auto sm:h-screen px-4 sm:px-8">
-        <Pricing />
+        <Pricing noBg />
       </section>
 
       {/* Footer */}

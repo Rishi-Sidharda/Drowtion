@@ -21,13 +21,5 @@ export function generateElements(customText) {
       y: 100 + Math.random() * 200,
       ...commonProps,
     },
-    {
-      type: "ellipse",
-      // This second element can have fixed or different content/properties
-      x: 200 + Math.random() * 200,
-      y: 200 + Math.random() * 200,
-      ...commonProps,
-      strokeColor: "#3498DB", // Different color for the second one
-    },
   ];
 }

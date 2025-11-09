@@ -191,11 +191,13 @@ const PricingCard = ({ plan, billingCycle }) => {
   );
 };
 
-const Pricing = () => {
+const Pricing = ({ noBg = false }) => {
   const [billingCycle, setBillingCycle] = useState("monthly");
 
   return (
-    <div className="min-h-screen bg-[#121212] w-full relative">
+    <div
+      className={`min-h-screen w-full relative ${noBg ? "" : "bg-[#121212]"}`}
+    >
       <div className={`${geistMono.variable} font-sans p-4 sm:p-8`}>
         <div className="max-w-4xl mx-auto text-center">
           <header className="mb-6 sm:mb-10 pt-6">
