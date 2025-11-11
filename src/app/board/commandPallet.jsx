@@ -14,7 +14,12 @@ export default function CommandPallet({ onClose, floatingNotionAction }) {
     { label: "Go to Home", action: () => router.push("/") },
     { label: "Open Dashboard", action: () => router.push("/dashboard") },
     { label: "Floating Notion", action: () => floatingNotionAction?.() },
-    { label: "Draw", action: () => drawExcalidrawElements?.() },
+    { label: "Add Rectangle", action: () => drawExcalidrawElements?.() },
+    { label: "Add Ellipse", action: () => drawExcalidrawElements?.() },
+    { label: "Add Rhombus", action: () => drawExcalidrawElements?.() },
+    { label: "Add Arrow", action: () => drawExcalidrawElements?.() },
+    { label: "Add Line", action: () => drawExcalidrawElements?.() },
+    { label: "Add Text", action: () => drawExcalidrawElements?.() },
   ];
 
   const filtered = commands.filter((cmd) =>
@@ -92,7 +97,7 @@ export default function CommandPallet({ onClose, floatingNotionAction }) {
         {/* Command list */}
         <div
           ref={listRef}
-          className="max-h-64 overflow-y-auto py-1 custom-scroll"
+          className="max-h-64 overflow-y-auto py-1 custom-scroll scrollbar-hidden"
         >
           {filtered.length > 0 ? (
             filtered.map((cmd, i) => (

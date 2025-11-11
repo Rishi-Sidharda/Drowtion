@@ -25,8 +25,7 @@ const Excalidraw = dynamic(
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-        }}
-      >
+        }}>
         Loading board...
       </div>
     ),
@@ -68,16 +67,19 @@ export default function Board() {
   useEffect(() => {
     if (!api || !boardId || isLoaded) return;
 
-    const savedBoards = JSON.parse(localStorage.getItem("boards") || "{}");
-    const boardData = savedBoards[boardId];
+    // Only load the specific board, not all boards
+    const boardKey = `board_${boardId}`;
+    const storedBoard = localStorage.getItem(boardKey);
 
-    if (boardData) {
+    if (storedBoard) {
+      const boardData = JSON.parse(storedBoard);
+
       const fixedAppState = {
         ...boardData.appState,
         collaborators: new Map(),
       };
 
-      // Delay load slightly to ensure Excalidraw is fully initialized
+      // Delay to ensure Excalidraw is initialized
       setTimeout(() => {
         api.updateScene({
           elements: boardData.elements || [],
@@ -118,91 +120,13 @@ export default function Board() {
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
-      {/* Sidebar */}
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: isOpen ? "17%" : "3.5%",
-          backgroundColor: "#1e1e1e",
-          transition: "width 0.3s ease",
-          zIndex: 10,
-          color: "white",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "1px",
-        }}
-      >
-        {/* Sidebar Content */}
-        {isOpen ? (
-          <div></div>
-        ) : (
-          <div className="flex flex-col justify-between items-center h-screen bg-[#1e1e1e] text-white">
-            {/* --- Top Section: Logo + 2 icons --- */}
-            <div className="flex flex-col items-center">
-              {/* Logo */}
-              <img
-                src="/logo_sm.svg"
-                alt="Logo"
-                className="rounded-md size-9 mt-4 cursor-pointer"
-                onClick={() => {
-                  window.location.href = "/";
-                }}
-              />
-
-              {/* Placeholder Icons */}
-              <div className="flex flex-col items-center gap-3 mt-4">
-                <button
-                  className="p-2 cursor-pointer rounded-md hover:bg-[#1a1a1a] transition-colors"
-                  title=""
-                  onClick={() => setIsOpen(true)}
-                >
-                  <SquareChevronRight size={24} className="text-gray-200" />
-                </button>
-
-                {/* New Note Icon */}
-                <button
-                  className="p-2 cursor-pointer rounded-md hover:bg-[#1a1a1a] transition-colors"
-                  title="Dashboard"
-                  onClick={() => {
-                    window.location.href = "/dashboard";
-                  }}
-                >
-                  <LayoutDashboard size={24} className="text-gray-200" />
-                </button>
-              </div>
-            </div>
-
-            {/* --- Bottom Section: 2 icons --- */}
-            <div className="flex flex-col items-center gap-4 mb-3">
-              <button
-                className="p-3 cursor-pointer rounded-md hover:bg-[#1a1a1a] transition-colors"
-                title="New Note"
-                onClick={() => {
-                  window.location.href = "/dashboard";
-                }}
-              >
-                <UserRoundCog size={24} className="text-gray-200" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Excalidraw Area */}
       <div
         style={{
           position: "relative",
-          width: "96.5%",
+          width: "100%",
           height: "100vh",
-          marginLeft: "3.5%", // visually align with sidebar's base width
-          backgroundColor: "#f5f5f5",
-        }}
-      >
+        }}>
         <Excalidraw
           theme="dark"
           excalidrawAPI={(excalidrawApi) => setApi(excalidrawApi)}
@@ -211,12 +135,32 @@ export default function Board() {
               // keeps the other buttons
               changeColor: true,
             },
+
             renderCustomUI: true,
           }}
           defaultOptions={{
             elementBackgroundColor: "red", // sets default element color
             primaryColor: "red", // sets the primary theme color to red
           }}
+          renderTopLeftUI={() => (
+            <button
+              onClick={() => setShowCommandPallet(true)}
+              className="text-xs"
+              style={{
+                top: "16px",
+                right: "16px",
+                zIndex: 10,
+                background: "#232329",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                padding: "8px 10px",
+                cursor: "pointer",
+                boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+              }}>
+              Add Component
+            </button>
+          )}
           renderTopRightUI={() => (
             <button
               onClick={() => setShowCommandPallet(true)}
@@ -232,8 +176,7 @@ export default function Board() {
                 padding: "8px 10px",
                 cursor: "pointer",
                 boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-              }}
-            >
+              }}>
               Add Component
             </button>
           )}
@@ -256,8 +199,7 @@ export default function Board() {
             boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
             transition: "all 0.2s ease-in-out",
             zIndex: 50,
-          }}
-        >
+          }}>
           {isSaving ? "✅ Saved!" : "💾 Save Board"}
         </button>
 
