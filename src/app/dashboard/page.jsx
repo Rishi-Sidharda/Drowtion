@@ -48,16 +48,19 @@ export default function DashboardPage() {
   }, []);
 
   const createNewBoard = () => {
-    const id = `new-${Date.now()}`;
+    const id = crypto.randomUUID(); // ✅ stable unique ID
     const savedBoards = JSON.parse(localStorage.getItem("boards") || "{}");
+
     savedBoards[id] = {
-      name: id,
+      id, // ✅ keep the id inside
+      name: "Untitled Board",
       emoji: "🖌️",
       elements: [],
       appState: {},
       files: {},
       updatedAt: new Date().toISOString(),
     };
+
     localStorage.setItem("boards", JSON.stringify(savedBoards));
     setBoards(savedBoards);
     router.push(`/board?id=${encodeURIComponent(id)}`);
@@ -80,19 +83,16 @@ export default function DashboardPage() {
     setMenuState({ open: false, x: 0, y: 0, boardId: null });
   };
 
-  const saveBoardName = (oldId) => {
+  const saveBoardName = (id) => {
     const trimmed = newBoardName.trim();
     if (!trimmed) return setErrorMessage("Board name cannot be empty.");
 
     const savedBoards = JSON.parse(localStorage.getItem("boards") || "{}");
-    if (savedBoards[trimmed] && trimmed !== oldId) {
-      setErrorMessage("A board with that name already exists.");
-      return;
-    }
+    if (!savedBoards[id]) return;
 
-    const boardData = savedBoards[oldId];
-    delete savedBoards[oldId];
-    savedBoards[trimmed] = { ...boardData, name: trimmed };
+    savedBoards[id].name = trimmed;
+    savedBoards[id].updatedAt = new Date().toISOString();
+
     localStorage.setItem("boards", JSON.stringify(savedBoards));
     setBoards(savedBoards);
     setEditingBoardId(null);
@@ -193,24 +193,20 @@ export default function DashboardPage() {
       <div
         className="board-menu absolute z-50 w-36 bg-[#2a2a2a] rounded-md shadow-xl p-1"
         style={{ left, top }}
-        onClick={(e) => e.stopPropagation()}
-      >
+        onClick={(e) => e.stopPropagation()}>
         <button
           onClick={() => openBoard(menuState.boardId)}
-          className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md transition-colors"
-        >
+          className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md transition-colors">
           <ExternalLink className="w-4 h-4 mr-2" /> Open
         </button>
         <button
           onClick={() => startRenaming(menuState.boardId, board.name)}
-          className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md transition-colors"
-        >
+          className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md transition-colors">
           <Edit className="w-4 h-4 mr-2" /> Rename
         </button>
         <button
           onClick={() => startEditingEmoji(menuState.boardId, board.emoji)}
-          className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md transition-colors"
-        >
+          className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md transition-colors">
           <Edit className="w-4 h-4 mr-2" /> Change Emoji
         </button>
         <div className="border-t border-gray-700 my-1"></div>
@@ -224,8 +220,7 @@ export default function DashboardPage() {
               deleteBoard(menuState.boardId);
             }
           }}
-          className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/40 rounded-md transition-colors"
-        >
+          className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/40 rounded-md transition-colors">
           <Trash2 className="w-4 h-4 mr-2" /> Delete
         </button>
       </div>
@@ -258,8 +253,7 @@ export default function DashboardPage() {
           <Button
             onClick={handleLogout}
             variant="outline"
-            className="bg-[#1e1e1e] border-gray-700 hover:bg-gray-800"
-          >
+            className="bg-[#1e1e1e] border-gray-700 hover:bg-gray-800">
             <LogOut className="w-4 h-4 mr-1" /> Logout
           </Button>
         </div>
@@ -271,8 +265,7 @@ export default function DashboardPage() {
           <h2 className="text-lg">Your Boards</h2>
           <Button
             onClick={createNewBoard}
-            className="bg-blue-600 hover:bg-blue-700 transition-colors"
-          >
+            className="bg-blue-600 hover:bg-blue-700 transition-colors">
             <PlusCircle className="w-4 h-4 mr-2" /> New Board
           </Button>
         </div>
@@ -289,13 +282,11 @@ export default function DashboardPage() {
               recentBoards.map((board) => (
                 <div
                   key={board.id}
-                  className="board-card-container relative font-sans shrink-0 w-40 h-40 bg-[#1a1a1a] rounded-xl flex flex-col justify-end hover:shadow-lg transition-shadow"
-                >
+                  className="board-card-container relative font-sans shrink-0 w-40 h-40 bg-[#1a1a1a] rounded-xl flex flex-col justify-end hover:shadow-lg transition-shadow">
                   <div className="grow bg-[#ff8383] rounded-t-xl"></div>
                   <div
                     className="p-4 cursor-pointer"
-                    onClick={() => openBoard(board.id)}
-                  >
+                    onClick={() => openBoard(board.id)}>
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center justify-between relative">
                         <span
@@ -304,15 +295,13 @@ export default function DashboardPage() {
                             e.stopPropagation();
                             startEditingEmoji(board.id, board.emoji);
                           }}
-                          title="Click to edit emoji"
-                        >
+                          title="Click to edit emoji">
                           {board.emoji || "🖌️"}
                         </span>
                         <span
                           className="text-white text-lg cursor-pointer p-1 hover:bg-[#2a2a2a] rounded-md transition-colors"
                           onClick={(e) => handleMenuClick(e, board.id)}
-                          title="More options"
-                        >
+                          title="More options">
                           <Ellipsis />
                         </span>
                       </div>
@@ -320,8 +309,7 @@ export default function DashboardPage() {
                         className="text-sm font-medium truncate text-white w-full"
                         onDoubleClick={() =>
                           startRenaming(board.id, board.name)
-                        }
-                      >
+                        }>
                         {board.name}
                       </h3>
                       <p className="text-xs text-gray-400">
@@ -346,14 +334,12 @@ export default function DashboardPage() {
                 <div
                   key={board.id}
                   className="board-card-container relative font-sans w-full h-32 bg-[#1a1a1a] rounded-xl shadow-xl shadow-[#101010] flex flex-col justify-end hover:shadow-lg transition-shadow p-4 cursor-pointer"
-                  onClick={() => openBoard(board.id)}
-                >
+                  onClick={() => openBoard(board.id)}>
                   <div className="flex items-center justify-between">
                     <span>{board.emoji || "🖌️"}</span>
                     <span
                       className="text-white cursor-pointer"
-                      onClick={(e) => handleMenuClick(e, board.id)}
-                    >
+                      onClick={(e) => handleMenuClick(e, board.id)}>
                       <Ellipsis />
                     </span>
                   </div>
@@ -394,8 +380,7 @@ export default function DashboardPage() {
                   onClick={() => {
                     setEditingBoardId(null);
                     setErrorMessage("");
-                  }}
-                >
+                  }}>
                   Cancel
                 </Button>
                 <Button onClick={() => saveBoardName(editingBoardId)}>
@@ -427,8 +412,7 @@ export default function DashboardPage() {
                   <span
                     key={emoji}
                     className="text-2xl cursor-pointer hover:bg-gray-700 rounded-md p-1"
-                    onClick={() => saveEmoji(editingEmojiId, emoji)}
-                  >
+                    onClick={() => saveEmoji(editingEmojiId, emoji)}>
                     {emoji}
                   </span>
                 ))}
@@ -436,8 +420,7 @@ export default function DashboardPage() {
               <div className="flex justify-end">
                 <Button
                   variant="outline"
-                  onClick={() => setEditingEmojiId(null)}
-                >
+                  onClick={() => setEditingEmojiId(null)}>
                   Cancel
                 </Button>
               </div>
