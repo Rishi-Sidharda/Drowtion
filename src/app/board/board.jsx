@@ -104,15 +104,27 @@ export default function Board() {
     const files = api.getFiles();
 
     const safeAppState = { ...appState, collaborators: {} };
-
-    const savedBoards = JSON.parse(localStorage.getItem("boards") || "{}");
-    savedBoards[boardId] = {
+    const boardData = {
       elements,
       appState: safeAppState,
       files,
-      name: boardId,
       updatedAt: new Date().toISOString(),
     };
+
+    // Load current saved boards
+    const savedBoards = JSON.parse(localStorage.getItem("boards") || "{}");
+    const existingBoard = savedBoards[boardId] || {};
+
+    // ✅ Preserve metadata (name, emoji, etc.)
+    const mergedBoard = {
+      ...existingBoard,
+      ...boardData,
+    };
+
+    // ✅ Save back to both locations
+    const boardKey = `board_${boardId}`;
+    localStorage.setItem(boardKey, JSON.stringify(mergedBoard));
+    savedBoards[boardId] = mergedBoard;
     localStorage.setItem("boards", JSON.stringify(savedBoards));
 
     setTimeout(() => setIsSaving(false), 800);
