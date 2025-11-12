@@ -29,10 +29,14 @@ function wrapText(text, fontSize, maxWidth) {
 export function generateMarkdownPage(centerX, centerY, markdownText) {
   const groupId = generateGroupId();
   const pageWidth = 650;
-  const padding = 40;
-  const lineSpacing = 10;
 
-  let contentHeight = padding; // top padding
+  // 👇 Independent left/right padding values
+  const leftPadding = 40;
+  const rightPadding = 20; // reduced right padding
+  const lineSpacing = 10;
+  const rightExtra = 20; // keep 0 to stay cleanly inside rectangle
+
+  let contentHeight = leftPadding; // top padding
   const elements = [];
   const lines = markdownText.split("\n");
 
@@ -63,7 +67,12 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
       return;
     }
 
-    const wrappedLines = wrapText(line, fontSize, pageWidth - 2 * padding);
+    const wrappedLines = wrapText(
+      line,
+      fontSize,
+      pageWidth - leftPadding - rightPadding
+    );
+
     processedLines.push({
       type: "text",
       lines: wrappedLines,
@@ -75,7 +84,7 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
     if (fontSize === 36) contentHeight += 10; // extra spacing for headers
   });
 
-  const pageHeight = contentHeight + padding; // add bottom padding
+  const pageHeight = contentHeight + leftPadding; // add bottom padding
   const topY = centerY - pageHeight / 2;
 
   // Rectangle background
@@ -96,7 +105,7 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
   elements.push(pageRect);
 
   // Place text elements
-  let currentY = topY + padding;
+  let currentY = topY + leftPadding;
 
   processedLines.forEach((item) => {
     if (item.type === "empty") {
@@ -104,9 +113,9 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
     } else if (item.type === "hr") {
       elements.push({
         type: "line",
-        x: centerX - (pageWidth - 2 * padding) / 2,
+        x: centerX - (pageWidth - leftPadding - rightPadding) / 2,
         y: currentY,
-        width: pageWidth - 2 * padding,
+        width: pageWidth - leftPadding - rightPadding,
         height: 0,
         strokeColor: "#000000",
         strokeWidth: 2,
@@ -122,11 +131,12 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
       item.lines.forEach((lineText) => {
         elements.push({
           type: "text",
-          x: centerX - (pageWidth - 2 * padding) / 2,
+          // 👇 fixed left margin, slightly tighter right margin
+          x: centerX - pageWidth / 2 + leftPadding,
           y: currentY,
           text: lineText,
           fontSize: item.fontSize,
-          width: pageWidth - 2 * padding,
+          width: pageWidth - leftPadding - rightPadding + rightExtra,
           height: item.fontSize + 8,
           fontFamily: 1,
           textAlign: "left",

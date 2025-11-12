@@ -15,21 +15,19 @@ export function generateElements({ component, appState }) {
 
   // Placeholder markdown text
   const placeholderMarkdown = `
-# Project Overview
+# API Overview
 
-This project aims to test the dynamic resizing of text boxes in our markdown re
-nderer. The paragraph below is intentionally long, including multiple sentences, commas, and various punctuation marks to push the limits of our wrapping logic. Every single word should wrap correctly within the rectangle width, and the rectangle height should grow accordingly.
+This API allows users to authenticate, fetch resources, and update data. Below is a detailed description of the endpoints and how they interact. The text is long enough to wrap naturally within the available width.
 
-> Quote Block Example: This quote is very long and designed to check if the wrapping and responsive behavior works properly. The background and stroke color should be different from normal text, and the text should still respect the left and right padding of the rectangle.
+> Remember: Always use HTTPS and include an authorization token in the headers.
 
-Here is another paragraph that is extremely verbose, containing multiple clauses, explanations, and exampl
-es. It should span multiple lines and demonstrate that both paragraph text and quote text behave as expected when reaching the edges of the rectangle. Ensure that spacing between lines remains consistent and visually pleasing.
+After a successful authentication, you’ll receive a JSON response that includes your session details, permissions, and expiration time. If authentication fails, the response will include an appropriate error message.
 
 ---
 
-# Conclusion
+# Sample Request
 
-Final notes on testing the markdown generator. Make sure headers, quotes, paragraphs, and horizontal rules all display correctly. Very long lines should wrap, and the rectangle height should expand dynamically to accommodate the content without cutting anything off.
+
 
 `;
 
