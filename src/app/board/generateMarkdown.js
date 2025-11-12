@@ -5,7 +5,7 @@ const generateGroupId = () =>
 
 // Approximate text wrapping function
 function wrapText(text, fontSize, maxWidth) {
-  const approxCharWidth = fontSize * 0.6; // rough width per character
+  const approxCharWidth = fontSize * 0.7; // rough width per character
   const maxCharsPerLine = Math.floor(maxWidth / approxCharWidth);
   const words = text.split(" ");
   const lines = [];
