@@ -39,6 +39,25 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
 
   const processedLines = [];
 
+  elements.push({
+    type: "text",
+    x: centerX,
+    y: centerY,
+    text: "H", // one space
+    fontSize: 1,
+    width: 1,
+    height: 1,
+    fontFamily: 1,
+    textAlign: "left",
+    verticalAlign: "top",
+    strokeColor: "transparent",
+    backgroundColor: "transparent",
+    strokeWidth: 0,
+    roughness: 0,
+    opacity: 0,
+    groupIds: [],
+  });
+
   // Preprocess lines to handle wrapping and calculate total height
   lines.forEach((line) => {
     line = line.trim();
