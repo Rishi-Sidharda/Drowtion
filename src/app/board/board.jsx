@@ -166,6 +166,25 @@ export default function Board() {
         <Excalidraw
           theme="dark"
           excalidrawAPI={(excalidrawApi) => setApi(excalidrawApi)}
+          onChange={(elements, state) => {
+            const { selectedElementIds } = state;
+            if (
+              !selectedElementIds ||
+              Object.keys(selectedElementIds).length === 0
+            )
+              return;
+
+            const selectedElements = elements.filter(
+              (el) => selectedElementIds[el.id]
+            );
+            const markdownSelected = selectedElements.some((el) =>
+              el.groupIds?.some((id) => id.startsWith("markdown-"))
+            );
+
+            if (markdownSelected) {
+              console.log("You selected a markdown page!");
+            }
+          }}
           UIOptions={{
             canvasActions: {
               changeColor: true,
@@ -182,7 +201,8 @@ export default function Board() {
               className="text-xs"
               style={{
                 top: "16px",
-                right: "16px",
+                left: "16px",
+                position: "absolute",
                 zIndex: 10,
                 background: "#232329",
                 color: "white",
@@ -202,6 +222,7 @@ export default function Board() {
               style={{
                 top: "16px",
                 right: "16px",
+                position: "absolute",
                 zIndex: 10,
                 background: "#232329",
                 color: "white",

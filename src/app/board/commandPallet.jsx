@@ -20,7 +20,7 @@ export default function CommandPallet({ onClose, floatingNotionAction }) {
     },
     { label: "Add Ellipse", action: () => drawExcalidrawElements("ellipse") },
     { label: "Add Rhombus", action: () => drawExcalidrawElements("diamond") },
-    { label: "Add Arrow", action: () => drawExcalidrawElements() },
+    { label: "Add Markdown", action: () => drawExcalidrawElements("markdown") },
     { label: "Add Line", action: () => drawExcalidrawElements() },
     { label: "Add Text", action: () => drawExcalidrawElements("text") },
   ];
