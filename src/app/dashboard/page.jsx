@@ -34,6 +34,7 @@ export default function DashboardPage() {
 
   // Storage key
   const STORAGE_KEY = "tenshin";
+  const BOARD_DATA_KEY = "boardData";
 
   // app state
   const [user, setUser] = useState(null);
@@ -110,83 +111,96 @@ export default function DashboardPage() {
   function loadFromStorage() {
     try {
       const tenshinRaw = localStorage.getItem(STORAGE_KEY);
+      const boardsDataRaw = localStorage.getItem(BOARD_DATA_KEY);
+      const boardsData = boardsDataRaw ? JSON.parse(boardsDataRaw) : {};
+
       if (tenshinRaw) {
         const parsed = JSON.parse(tenshinRaw);
-        // ensure correct shape
         const folders = parsed.folders || {};
         const boards = parsed.boards || {};
         const ui = parsed.ui || { collapsedFolders: {} };
+
         // ensure folders have arrays + expanded default
         Object.keys(folders).forEach((fid) => {
           if (!Array.isArray(folders[fid].boards)) folders[fid].boards = [];
           if (folders[fid].expanded === undefined) folders[fid].expanded = true;
         });
-        return { folders, boards, ui };
+
+        return { folders, boards, ui, boardsData };
       }
 
-      // if tenshin not found, check old "boards" key for migration
+      // migrate from old "boards" key if present
       const oldRaw = localStorage.getItem("boards");
       if (oldRaw) {
         const oldParsed = JSON.parse(oldRaw);
-        // if oldParsed looks like new schema already, just migrate to tenshin
-        if (
-          oldParsed &&
-          (oldParsed.folders !== undefined || oldParsed.boards !== undefined)
-        ) {
-          const folders = oldParsed.folders || {};
-          const boards = oldParsed.boards || {};
-          const ui = oldParsed.ui || { collapsedFolders: {} };
-          Object.keys(folders).forEach((fid) => {
-            if (!Array.isArray(folders[fid].boards)) folders[fid].boards = [];
-            if (folders[fid].expanded === undefined)
-              folders[fid].expanded = true;
-          });
-          // save to tenshin and delete old key
-          const newTop = { folders, boards, ui };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(newTop));
-          try {
-            localStorage.removeItem("boards");
-          } catch (e) {}
-          return newTop;
-        }
-
-        // otherwise assume old flat boards object { [id]: board }
         const boards = {};
+        const newBoardsData = {};
+
         Object.keys(oldParsed).forEach((id) => {
+          const board = oldParsed[id];
           boards[id] = {
-            ...oldParsed[id],
-            folderId: null,
-            isFavorite: oldParsed[id].isFavorite || false,
-            updatedAt: oldParsed[id].updatedAt || new Date().toISOString(),
+            id,
+            name: board.name || "Untitled Board",
+            icon: board.icon || "Brush",
+            folderId: board.folderId || null,
+            isFavorite: board.isFavorite || false,
+            updatedAt: board.updatedAt || new Date().toISOString(),
+          };
+          newBoardsData[id] = {
+            elements: board.elements || [],
+            appState: board.appState || {},
+            files: board.files || {},
           };
         });
+
         const newTop = { folders: {}, boards, ui: { collapsedFolders: {} } };
-        // persist under tenshin and remove old boards key
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newTop));
+        localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(newBoardsData));
+
         try {
           localStorage.removeItem("boards");
         } catch (e) {}
-        return newTop;
+
+        return {
+          folders: {},
+          boards,
+          ui: { collapsedFolders: {} },
+          boardsData: newBoardsData,
+        };
       }
 
       // nothing found
-      return { folders: {}, boards: {}, ui: { collapsedFolders: {} } };
+      return {
+        folders: {},
+        boards: {},
+        ui: { collapsedFolders: {} },
+        boardsData: {},
+      };
     } catch (e) {
       console.error("loadFromStorage error", e);
-      return { folders: {}, boards: {}, ui: { collapsedFolders: {} } };
+      return {
+        folders: {},
+        boards: {},
+        ui: { collapsedFolders: {} },
+        boardsData: {},
+      };
     }
   }
 
-  function saveToStorage(newData) {
+  function saveToStorage({ folders, boards, ui, boardsData }) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
-      setData(newData);
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ folders, boards, ui })
+      );
+      localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
+      setData({ folders, boards, ui, boardsData });
     } catch (e) {
       console.error("saveToStorage error", e);
     }
   }
 
-  // initial load + auth
+  // ----------------------- INITIAL LOAD & AUTH -----------------------
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -204,14 +218,13 @@ export default function DashboardPage() {
   useEffect(() => {
     const loaded = loadFromStorage();
     setData(loaded);
-    // ensure any missing ui shape
     if (!loaded.ui) {
       const newData = { ...loaded, ui: { collapsedFolders: {} } };
       saveToStorage(newData);
     }
   }, []);
 
-  // derived lists
+  // ----------------------- DERIVED LISTS -----------------------
   const allBoardsArray = Object.keys(data.boards || {}).map((id) => ({
     id,
     ...data.boards[id],
@@ -225,7 +238,7 @@ export default function DashboardPage() {
     a.name.localeCompare(b.name)
   );
 
-  // helpers
+  // ----------------------- HELPERS -----------------------
   function timeAgo(dateString) {
     if (!dateString) return "just now";
     const date = new Date(dateString);
@@ -248,29 +261,33 @@ export default function DashboardPage() {
     return "just now";
   }
 
-  // BOARD CRUD
+  // ----------------------- BOARD CRUD -----------------------
   const createNewBoard = () => {
     const id = crypto.randomUUID();
     const assignedFolderId = selectedFolderId || null;
-    const newBoard = {
+
+    const newMeta = {
       id,
       name: "Untitled Board",
       icon: "Brush",
       folderId: assignedFolderId,
       isFavorite: false,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const newBoardData = {
       elements: [],
       appState: {},
       files: {},
-      updatedAt: new Date().toISOString(),
     };
 
     const newData = {
       folders: { ...(data.folders || {}) },
-      boards: { ...(data.boards || {}), [id]: newBoard },
+      boards: { ...(data.boards || {}), [id]: newMeta },
+      boardsData: { ...(data.boardsData || {}), [id]: newBoardData },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
 
-    // add reference to folder if provided
     if (assignedFolderId && newData.folders[assignedFolderId]) {
       const f = { ...newData.folders[assignedFolderId] };
       f.boards = Array.from(new Set([...(f.boards || []), id]));
@@ -287,11 +304,12 @@ export default function DashboardPage() {
     const newData = {
       folders: { ...(data.folders || {}) },
       boards: { ...(data.boards || {}) },
+      boardsData: { ...(data.boardsData || {}) },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
     const board = newData.boards[id];
     if (!board) return;
-    // defensive: remove from any folder index
+
     Object.keys(newData.folders).forEach((fid) => {
       const f = { ...newData.folders[fid] };
       if (Array.isArray(f.boards) && f.boards.includes(id)) {
@@ -299,7 +317,10 @@ export default function DashboardPage() {
         newData.folders[fid] = f;
       }
     });
+
     delete newData.boards[id];
+    delete newData.boardsData[id];
+
     saveToStorage(newData);
     setMenuState({ open: false, x: 0, y: 0, boardId: null });
   };
@@ -321,7 +342,7 @@ export default function DashboardPage() {
     if (!newData.boards[id]) return;
     newData.boards[id].name = trimmed;
     newData.boards[id].updatedAt = new Date().toISOString();
-    saveToStorage(newData);
+    saveToStorage({ ...newData, boardsData: data.boardsData });
     setEditingBoardId(null);
     setErrorMessage("");
   };
@@ -336,7 +357,7 @@ export default function DashboardPage() {
     if (!newData.boards[id]) return;
     newData.boards[id].icon = iconName;
     newData.boards[id].updatedAt = new Date().toISOString();
-    saveToStorage(newData);
+    saveToStorage({ ...newData, boardsData: data.boardsData });
     setEditingIconId(null);
   };
 
@@ -345,15 +366,15 @@ export default function DashboardPage() {
     if (!newData.boards[id]) return;
     newData.boards[id].isFavorite = !newData.boards[id].isFavorite;
     newData.boards[id].updatedAt = new Date().toISOString();
-    saveToStorage(newData);
+    saveToStorage({ ...newData, boardsData: data.boardsData });
     setMenuState({ open: false, x: 0, y: 0, boardId: null });
   };
 
-  // robust move function
   const moveBoardToFolder = (boardId, folderId) => {
     const newData = {
       boards: { ...(data.boards || {}) },
       folders: { ...(data.folders || {}) },
+      boardsData: { ...(data.boardsData || {}) },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
     const board = newData.boards[boardId];
@@ -365,7 +386,6 @@ export default function DashboardPage() {
       return;
     }
 
-    // remove from any folder index
     Object.keys(newData.folders).forEach((fid) => {
       const f = { ...newData.folders[fid] };
       if (Array.isArray(f.boards) && f.boards.includes(boardId)) {
@@ -374,25 +394,23 @@ export default function DashboardPage() {
       }
     });
 
-    // update board.folderId
     newData.boards[boardId] = {
       ...board,
       folderId: folderId || null,
       updatedAt: new Date().toISOString(),
     };
 
-    // add to destination folder index
     if (folderId && newData.folders[folderId]) {
       const dest = { ...newData.folders[folderId] };
       dest.boards = Array.from(new Set([...(dest.boards || []), boardId]));
       newData.folders[folderId] = dest;
     }
 
-    saveToStorage({ ...data, ...newData });
+    saveToStorage(newData);
     setMenuState({ open: false, x: 0, y: 0, boardId: null });
   };
 
-  // FOLDER CRUD
+  // ----------------------- FOLDER CRUD -----------------------
   const openCreateFolderModal = () => {
     setFolderForm({
       name: "New Folder",
@@ -416,6 +434,7 @@ export default function DashboardPage() {
     const newData = {
       folders: { ...(data.folders || {}), [id]: newFolder },
       boards: { ...(data.boards || {}) },
+      boardsData: { ...(data.boardsData || {}) },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
     if (!newData.ui.collapsedFolders) newData.ui.collapsedFolders = {};
@@ -466,6 +485,7 @@ export default function DashboardPage() {
     const newData = {
       folders: { ...(data.folders || {}) },
       boards: { ...(data.boards || {}) },
+      boardsData: { ...(data.boardsData || {}) },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
 
@@ -830,9 +850,9 @@ export default function DashboardPage() {
                       {!isCollapsed && (
                         <div className="ml-6 mt-1 mb-2 flex flex-col gap-1">
                           {folderBoards.length ? (
-                            folderBoards.map((b) => (
+                            folderBoards.map((b, index) => (
                               <button
-                                key={b.id}
+                                key={b.id ?? index}
                                 onClick={() => openBoard(b.id)}
                                 className="text-sm text-gray-300 hover:text-white text-left truncate">
                                 {b.name}
