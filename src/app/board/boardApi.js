@@ -34,13 +34,61 @@ export const drawExcalidrawElements = async (component) => {
   // ✅ Get current app state to compute center coordinates
   const appState = excalidrawApi.getAppState();
 
-  // Generate new centered elements
+  // Base existing elements
+  const currentElements = excalidrawApi.getSceneElements() ?? [];
+
+  // ⚙️ If markdown — do two-phase rendering
+  if (component === "markdown") {
+    // Step 1️⃣: Add a fake text element to prime the renderer
+    const fakeText = convertToExcalidrawElements([
+      {
+        type: "text",
+        x: 100,
+        y: 100,
+        text: "Priming text...",
+        fontSize: 10,
+        width: 100,
+        height: 20,
+        fontFamily: 1,
+        textAlign: "left",
+        verticalAlign: "top",
+        strokeColor: "#AAAAAA",
+        backgroundColor: "transparent",
+        strokeWidth: 1,
+        roughness: 0,
+        opacity: 50,
+      },
+    ]);
+
+    excalidrawApi.updateScene({
+      elements: [...currentElements, ...fakeText],
+    });
+
+    // Wait briefly to ensure the renderer updates
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Step 2️⃣: Now add the real markdown
+    const markdownElements = convertToExcalidrawElements(
+      generateElements({ component, appState })
+    );
+
+    // Remove fake text element by filtering it out
+    const sceneWithoutFake = excalidrawApi
+      .getSceneElements()
+      .filter((el) => el.text !== "Priming text...");
+
+    excalidrawApi.updateScene({
+      elements: [...sceneWithoutFake, ...markdownElements],
+    });
+
+    console.log("✅ Markdown rendered after priming");
+    return;
+  }
+
+  // 🧩 Default single-phase rendering for everything else
   const newElements = convertToExcalidrawElements(
     generateElements({ component, appState })
   );
-
-  // Append elements safely
-  const currentElements = excalidrawApi.getSceneElements() ?? [];
 
   excalidrawApi.updateScene({
     elements: [...currentElements, ...newElements],

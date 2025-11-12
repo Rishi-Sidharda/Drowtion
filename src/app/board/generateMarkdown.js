@@ -31,19 +31,25 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
   const pageWidth = 650;
   const padding = 40;
   const lineSpacing = 10;
-  const rightExtra = 20; // 👈 extra width to the right for text boxes
+  const rightExtra = 20;
 
-  let contentHeight = padding; // top padding
+  // ✅ Add minor rounding and jitter to avoid subpixel cutoff
+  const jitterX = (Math.random() - 0.5) * 2; // ±1px
+  const jitterY = (Math.random() - 0.5) * 2;
+  const safeCenterX = Math.round((centerX + jitterX) * 100) / 100;
+  const safeCenterY = Math.round((centerY + jitterY) * 100) / 100;
+
+  let contentHeight = padding;
   const elements = [];
   const lines = markdownText.split("\n");
-
   const processedLines = [];
 
+  // ✅ Dummy invisible preload text (helps font render on first draw)
   elements.push({
     type: "text",
-    x: centerX,
-    y: centerY,
-    text: "H", // one space
+    x: safeCenterX,
+    y: safeCenterY,
+    text: " ",
     fontSize: 1,
     width: 1,
     height: 1,
@@ -58,7 +64,7 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
     groupIds: [],
   });
 
-  // Preprocess lines to handle wrapping and calculate total height
+  // Process lines
   lines.forEach((line) => {
     line = line.trim();
     if (!line) {
@@ -95,13 +101,13 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
     if (fontSize === 36) contentHeight += 10; // extra spacing for headers
   });
 
-  const pageHeight = contentHeight + padding; // add bottom padding
-  const topY = centerY - pageHeight / 2;
+  const pageHeight = contentHeight + padding;
+  const topY = safeCenterY - pageHeight / 2;
 
   // Rectangle background
   const pageRect = {
     type: "rectangle",
-    x: centerX - pageWidth / 2,
+    x: safeCenterX - pageWidth / 2,
     y: topY,
     width: pageWidth,
     height: pageHeight,
@@ -115,7 +121,6 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
 
   elements.push(pageRect);
 
-  // Place text elements
   let currentY = topY + padding;
 
   processedLines.forEach((item) => {
@@ -124,7 +129,7 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
     } else if (item.type === "hr") {
       elements.push({
         type: "line",
-        x: centerX - (pageWidth - 2 * padding) / 2,
+        x: safeCenterX - (pageWidth - 2 * padding) / 2,
         y: currentY,
         width: pageWidth - 2 * padding,
         height: 0,
@@ -142,12 +147,11 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
       item.lines.forEach((lineText) => {
         elements.push({
           type: "text",
-          // 👇 Keep same left padding, extend width slightly to the right
-          x: centerX - (pageWidth - 2 * padding) / 2,
+          x: safeCenterX - (pageWidth - 2 * padding) / 2,
           y: currentY,
           text: lineText,
           fontSize: item.fontSize,
-          width: pageWidth - 2 * padding + rightExtra, // 👈 give extra room
+          width: pageWidth - 2, // keep wide enough for wrapping
           height: item.fontSize + 8,
           fontFamily: 1,
           textAlign: "left",
@@ -162,7 +166,7 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
         currentY += item.fontSize + lineSpacing;
       });
 
-      if (item.fontSize === 36) currentY += 10; // extra spacing for headers
+      if (item.fontSize === 36) currentY += 10;
     }
   });
 
