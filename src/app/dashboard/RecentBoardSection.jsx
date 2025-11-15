@@ -1,0 +1,82 @@
+"use client";
+
+import { Ellipsis, Brush } from "lucide-react";
+// ICONS will now be passed as a prop instead of imported // adjust import depending on your project
+
+export default function RecentBoards({
+  recentBoards,
+  data,
+  openBoard,
+  handleBoardMenuClick,
+  startEditingIcon,
+  startRenaming,
+  timeAgo,
+  ICONS,
+}) {
+  return (
+    <section className="mb-10">
+      <h3 className="text-lg mt-20 mb-4">Recent Boards</h3>
+      <div className="flex flex-wrap gap-4 py-4 justify-start">
+        {recentBoards.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-gray-500 h-36 rounded-lg w-full bg-gray-900">
+            <p className="text-sm">No boards yet. Create your first one!</p>
+          </div>
+        ) : (
+          recentBoards.slice(0, 6).map((board) => {
+            const Icon = ICONS[board.icon] || Brush;
+            const folder = board.folderId ? data.folders[board.folderId] : null;
+
+            return (
+              <div
+                key={board.id}
+                className="board-card-container w-36 h-36 bg-[#202020] hover:bg-[#2a2a2a] rounded-md flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow transform hover:-translate-y-0.5 hover:scale-105 cursor-pointer"
+                onClick={() => openBoard(board.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  handleBoardMenuClick(e, board.id);
+                }}
+              >
+                <div
+                  className="h-3 w-full rounded-t-lg"
+                  style={{ backgroundColor: folder ? folder.color : "#6b7280" }}
+                ></div>
+
+                <div className="p-3 flex flex-col gap-5 h-full">
+                  <div className="flex items-center justify-between">
+                    <div
+                      className="p-1 rounded hover:bg-[#3a3a3a] transition-transform hover:scale-110"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEditingIcon(board.id);
+                      }}
+                    >
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <span
+                      className="text-white p-1 rounded hover:bg-[#3a3a3a]"
+                      onClick={(e) => handleBoardMenuClick(e, board.id)}
+                    >
+                      <Ellipsis />
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3
+                      className="text-white text-md truncate"
+                      onDoubleClick={() => startRenaming(board.id, board.name)}
+                    >
+                      {board.name}
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {timeAgo(board.updatedAt)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+}
