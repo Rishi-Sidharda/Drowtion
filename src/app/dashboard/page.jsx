@@ -18,16 +18,16 @@ import {
   Bolt,
   PaintBucket,
 } from "lucide-react";
-import BoardMenu from "./BoardMenu";
-import FolderMenu from "./FolderMenu";
-import Sidebar from "./Sidebar";
-import RecentBoards from "./RecentBoardSection";
-import SelectFolderViewSection from "./SelectFolderViewSection";
-import RenameBoardModal from "./RenameBoardModal";
-import IconPickerModal from "./IconPickerModal";
-import CreateFolderModal from "./CreateFolderModal";
-import EditFolderModal from "./EditFolderModal";
-import DeleteFolderModal from "./DeleteFolderModal";
+import BoardMenu from "./menus/BoardMenu";
+import FolderMenu from "./menus/FolderMenu";
+import Sidebar from "./sections/Sidebar";
+import RecentBoards from "./sections/RecentBoardSection";
+import SelectFolderViewSection from "./sections/SelectFolderViewSection";
+import RenameBoardModal from "./modals/RenameBoardModal";
+import IconPickerModal from "./modals/IconPickerModal";
+import CreateFolderModal from "./modals/CreateFolderModal";
+import EditFolderModal from "./modals/EditFolderModal";
+import DeleteFolderModal from "./modals/DeleteFolderModal";
 
 export default function DashboardPage() {
   const router = useRouter();
