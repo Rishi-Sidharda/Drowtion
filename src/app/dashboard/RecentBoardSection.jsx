@@ -18,7 +18,7 @@ export default function RecentBoards({
       <h3 className="text-lg mt-20 mb-4">Recent Boards</h3>
       <div className="flex flex-wrap gap-4 py-4 justify-start">
         {recentBoards.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-gray-500 h-36 rounded-lg w-full bg-gray-900">
+          <div className="flex flex-col items-center justify-center text-gray-500 h-36 rounded-lg w-full bg-[#1a1a1a]">
             <p className="text-sm">No boards yet. Create your first one!</p>
           </div>
         ) : (
