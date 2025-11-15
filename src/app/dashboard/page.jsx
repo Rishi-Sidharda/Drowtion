@@ -63,6 +63,7 @@ export default function DashboardPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [editingIconId, setEditingIconId] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropDownSelectedId, setDropDownSelectedId] = useState("all");
 
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [editFolderModalOpen, setEditFolderModalOpen] = useState(false);
@@ -599,8 +600,8 @@ export default function DashboardPage() {
 
             <SelectFolderViewSection
               data={data}
-              selectedFolderId={selectedFolderId}
-              setSelectedFolderId={setSelectedFolderId}
+              selectedFolderId={dropDownSelectedId}
+              setSelectedFolderId={setDropDownSelectedId}
               dropdownOpen={dropdownOpen}
               setDropdownOpen={setDropdownOpen}
               ICONS={ICONS}

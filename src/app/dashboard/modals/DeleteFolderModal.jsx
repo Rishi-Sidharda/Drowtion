@@ -18,7 +18,7 @@ const DeleteFolderModal = ({ deleteFolderConfirm, onClose, deleteFolder }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed font-outfit inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={onClose} // clicking outside closes modal
     >
       <div

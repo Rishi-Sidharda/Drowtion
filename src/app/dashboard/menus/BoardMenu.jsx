@@ -32,7 +32,7 @@ export default function BoardMenu({
 
   return (
     <div
-      className="board-menu absolute z-50 w-56 bg-[#2a2a2a] rounded-md shadow-xl p-1"
+      className="board-menu font-outfit absolute z-50 w-56 bg-[#2a2a2a] rounded-md shadow-xl p-1"
       style={{ left, top }}
       onClick={(e) => e.stopPropagation()}
     >

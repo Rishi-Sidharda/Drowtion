@@ -14,12 +14,14 @@ export default function RecentBoards({
   ICONS,
 }) {
   return (
-    <section className="mb-10">
-      <h3 className="text-lg mt-20 mb-4">Recent Boards</h3>
+    <section className="mb-10 font-outfit">
+      <h3 className="text-lg font-medium mt-20 mb-4">Recent Boards</h3>
       <div className="flex flex-wrap gap-4 py-4 justify-start">
         {recentBoards.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-gray-500 h-36 rounded-lg w-full bg-[#1a1a1a]">
-            <p className="text-sm">No boards yet. Create your first one!</p>
+            <p className="text-sm font-light">
+              No boards yet. Create your first one!
+            </p>
           </div>
         ) : (
           recentBoards.slice(0, 6).map((board) => {

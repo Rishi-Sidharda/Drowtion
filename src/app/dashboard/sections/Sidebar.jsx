@@ -33,7 +33,7 @@ export default function Sidebar({
   setSelectedFolderId,
 }) {
   return (
-    <aside className="w-64 h-screen bg-[#202020] border-r border-[#2a2a2a] flex flex-col">
+    <aside className="w-64 font-outfit h-screen bg-[#202020] border-r border-[#2a2a2a] flex flex-col">
       {/* Top section (fixed) */}
       <div className="flex items-center justify-between px-2 py-4">
         <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function Sidebar({
                         e.stopPropagation();
                         toggleFolderCollapse(folder.id);
                       }}
-                      className="px-1 py-2 text-gray-400 hover:text-gray-200 transition-colors duration-150 rounded"
+                      className="px-1 py-2 text-gray-400 hover:text-gray-200 transition-colors duration-150 rounded flex-shrink-0"
                     >
                       {isCollapsed ? (
                         <ChevronRight className="w-4 h-4" />
@@ -180,15 +180,17 @@ export default function Sidebar({
                         e.preventDefault();
                         handleFolderMenuClick(e, folder.id);
                       }}
-                      className="flex items-center gap-2 w-full text-left"
+                      className="flex items-center gap-2 w-full text-left flex-1 min-w-0"
                     >
                       <span
-                        className="inline-flex items-center justify-center w-5 h-5 rounded-sm"
+                        className="inline-flex shrink-0 items-center justify-center w-5 h-5 rounded-sm"
                         style={{ background: folder.color }}
                       >
                         <Icon className="w-3 h-3 text-white" />
                       </span>
-                      <span className="truncate text-sm">{folder.name}</span>
+                      <span className="truncate text-sm min-w-0">
+                        {folder.name}
+                      </span>
                     </button>
 
                     {/* Three-dot menu */}
@@ -198,7 +200,7 @@ export default function Sidebar({
                         handleFolderMenuClick(e, folder.id);
                       }}
                       aria-label="Folder options"
-                      className="p-1 text-gray-400 hover:text-gray-200 rounded"
+                      className="p-1 text-gray-400 hover:text-gray-200 rounded flex-shrink-0"
                     >
                       <MoreHorizontal className="w-4 h-4" />
                     </button>

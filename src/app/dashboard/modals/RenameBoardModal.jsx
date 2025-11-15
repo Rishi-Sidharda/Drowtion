@@ -34,7 +34,7 @@ export default function RenameBoardModal({
   return (
     <div
       id="modal-overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed font-outfit inset-0 z-50 flex items-center justify-center bg-black/50"
       onClick={handleClickOutside}
     >
       <div className="bg-[#1a1a1a] p-6 rounded-md w-80 shadow-xl">

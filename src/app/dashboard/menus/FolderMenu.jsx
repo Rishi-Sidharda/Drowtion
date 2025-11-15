@@ -30,7 +30,7 @@ export default function FolderMenu({
 
   return (
     <div
-      className="folder-menu absolute z-50 w-50 bg-[#2a2a2a] rounded-md shadow-xl p-1"
+      className="folder-menu font-outfit absolute z-50 w-50 bg-[#2a2a2a] rounded-md shadow-xl p-1"
       style={{ left, top }}
       onClick={(e) => e.stopPropagation()}
     >
