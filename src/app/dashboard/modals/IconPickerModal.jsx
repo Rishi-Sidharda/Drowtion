@@ -30,7 +30,7 @@ const IconPickerModal = ({
       onClick={() => setEditingIconId(null)} // clicking backdrop closes modal
     >
       <div
-        className="bg-[#1a1a1a] p-6 rounded-xl w-80 shadow-xl"
+        className="bg-[#1a1a1a] p-6 rounded-md w-80 shadow-xl"
         onClick={handleModalClick} // clicking modal itself does NOT close it
       >
         <h2 className="text-lg text-white mb-4">Choose an Icon</h2>
@@ -40,7 +40,7 @@ const IconPickerModal = ({
             return (
               <div
                 key={iconName}
-                className="cursor-pointer p-2 hover:bg-gray-700 rounded-md flex items-center justify-center transition-transform hover:scale-110"
+                className="cursor-pointer p-2 hover:bg-[#3a3a3a] rounded-md flex items-center justify-center transition-transform hover:scale-110"
                 onClick={() => saveIcon(editingIconId, iconName)}
               >
                 <Icon className="w-6 h-6 text-gray-300" />
@@ -49,7 +49,10 @@ const IconPickerModal = ({
           })}
         </div>
         <div className="flex justify-end">
-          <Button variant="outline" onClick={() => setEditingIconId(null)}>
+          <Button
+            className="cursor-pointer hover:bg-[#3a3a3a] bg-[#2a2a2a]"
+            onClick={() => setEditingIconId(null)}
+          >
             Cancel
           </Button>
         </div>

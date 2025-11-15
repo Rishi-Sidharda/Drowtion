@@ -22,19 +22,27 @@ const DeleteFolderModal = ({ deleteFolderConfirm, onClose, deleteFolder }) => {
       onClick={onClose} // clicking outside closes modal
     >
       <div
-        className="bg-[#1a1a1a] p-6 rounded-xl w-96 shadow-xl"
+        className="bg-[#1a1a1a] p-6 rounded-sm w-96 shadow-xl"
         onClick={handleModalClick}
       >
-        <h2 className="text-lg text-white mb-4">Delete folder</h2>
+        <h2 className="text-lg text-red-400 font-bold mb-4">Delete folder</h2>
         <p className="text-sm text-gray-300 mb-4">
           Are you sure you want to delete this folder? Boards inside will move
           to "No Folder".
         </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex justify-end font-sans gap-2">
+          <Button
+            className="cursor-pointer hover:bg-[#3a3a3a] bg-[#2a2a2a]"
+            onClick={onClose}
+          >
             Cancel
           </Button>
-          <Button onClick={deleteFolder}>Delete Folder</Button>
+          <Button
+            className="cursor-pointer hover:bg-[#3a3a3a] bg-[#2a2a2a]"
+            onClick={deleteFolder}
+          >
+            Delete Folder
+          </Button>
         </div>
       </div>
     </div>
