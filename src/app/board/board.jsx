@@ -7,6 +7,7 @@ import "@excalidraw/excalidraw/index.css";
 import { setExcalidrawApi } from "./boardApi";
 import FloatingCard from "./floatingCard";
 import CommandPallet from "./commandPallet";
+import FloatingEditMarkdownCard from "./floatingEditMarkdownCard";
 
 const Excalidraw = dynamic(
   async () => (await import("@excalidraw/excalidraw")).Excalidraw,
@@ -37,11 +38,11 @@ export default function Board() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showMarkdownButton, setShowMarkdownButton] = useState(false);
+  const [isEditingMarkdown, setIsEditingMarkdown] = useState(false);
 
   const [selectedMarkdownText, setSelectedMarkdownText] = useState(null);
   const [selectedMarkdownGroupId, setSelectedMarkdownGroupId] = useState(null);
-  const [showDeleteMarkdownButton, setShowDeleteMarkdownButton] =
-    useState(false);
+  const [markdownPosition, setMarkdownPosition] = useState({ x: 0, y: 0 });
 
   const BOARD_DATA_KEY = "boardData";
 
@@ -66,7 +67,6 @@ export default function Board() {
     if (markdownElement) {
       // Show the markdown button
       setShowMarkdownButton(true);
-      setShowDeleteMarkdownButton(true);
 
       // Get the first markdown groupId
       const markdownGroupId = markdownElement.groupIds.find((id) =>
@@ -90,7 +90,6 @@ export default function Board() {
       // No markdown element selected
       setShowMarkdownButton(false);
       setSelectedMarkdownText(null);
-      setShowDeleteMarkdownButton(false);
     }
   };
 
@@ -172,16 +171,28 @@ export default function Board() {
 
     localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
 
-    console.log(
-      "Deleted markdown:",
-      selectedMarkdownGroupId,
-      "and its associated elements."
-    );
-
     // 3️⃣ Reset UI state
     setSelectedMarkdownText(null);
     setShowMarkdownButton(false);
-    setShowDeleteMarkdownButton(false);
+  };
+
+  const handleEditMarkdown = () => {
+    setIsEditingMarkdown(true);
+
+    const rect = api
+      ?.getSceneElements()
+      ?.find(
+        (el) =>
+          el.type === "rectangle" &&
+          el.groupIds?.includes(selectedMarkdownGroupId)
+      );
+
+    if (rect) {
+      setMarkdownPosition({ x: rect.x, y: rect.y });
+      console.log(selectedMarkdownText);
+    } else {
+      console.log("Markdown rectangle NOT FOUND");
+    }
   };
 
   // ✅ Manual Save Button handler
@@ -279,25 +290,7 @@ export default function Board() {
                     boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
                   }}
                   onClick={() => {
-                    console.log("Markdown text:", selectedMarkdownText);
-                    console.log("id:", selectedMarkdownGroupId);
-
-                    const rect = api
-                      ?.getSceneElements()
-                      ?.find(
-                        (el) =>
-                          el.type === "rectangle" &&
-                          el.groupIds?.includes(selectedMarkdownGroupId)
-                      );
-
-                    if (rect) {
-                      console.log("Markdown rectangle position:", {
-                        x: rect.x,
-                        y: rect.y,
-                      });
-                    } else {
-                      console.log("Markdown rectangle NOT FOUND");
-                    }
+                    handleEditMarkdown();
                   }}
                 >
                   Markdown Options
@@ -384,6 +377,17 @@ export default function Board() {
           <FloatingCard
             title="Custom Floating Card"
             onClose={() => setShowFloatingCard(false)}
+          />
+        )}
+        {isEditingMarkdown && (
+          <FloatingEditMarkdownCard
+            title="Custom Floating Card"
+            onClose={() => setIsEditingMarkdown(false)}
+            markdownText={selectedMarkdownText}
+            deleteMarkdown={() => {
+              deleteMarkdown();
+            }}
+            markdownPosition={markdownPosition}
           />
         )}
       </div>
