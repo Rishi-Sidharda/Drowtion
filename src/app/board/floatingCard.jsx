@@ -3,16 +3,6 @@ import React, { useRef, useEffect, useState } from "react";
 import { drawExcalidrawElements } from "./boardApi";
 import { Eye, EyeOff, X, Save } from "lucide-react";
 
-/**
- * FloatingCard - Improved Markdown editor
- *
- * Key behavior:
- * - Allowed blocks: #, >, >>, ---
- * - Undo/redo works after clicking block buttons (uses setRangeText)
- * - Manual newline behavior: pressing Enter creates a paragraph line (no automatic prefix continuation)
- * - Keyboard shortcuts for quick block insertion and saving
- */
-
 const ALLOWED_BLOCKS = [
   { label: "Heading", symbol: "#", shortcut: "Ctrl+1" },
   { label: "Quote", symbol: ">", shortcut: "Ctrl+Q" },
