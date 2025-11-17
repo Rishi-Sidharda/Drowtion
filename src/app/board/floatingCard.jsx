@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import { drawExcalidrawElements } from "./boardApi";
+import { Eye, EyeOff } from "lucide-react";
 
 /**
  * FloatingCard - Improved Markdown editor
@@ -27,6 +28,10 @@ export default function FloatingCard({ onClose, onSave }) {
   // for DOM edits (so the browser undo stack works). We sync state on input events.
   const [markdownContent, setMarkdownContent] = useState(placeholderSafe());
   const [showPreview, setShowPreview] = useState(false);
+
+  // 1. NEW STATE: To manage the container width based on preview state
+  // w-1/2 is the default width, w-[60%] is the increased width
+  const [containerWidth, setContainerWidth] = useState("w-1/2");
 
   // Initialize textarea value on mount
   useEffect(() => {
@@ -161,6 +166,16 @@ export default function FloatingCard({ onClose, onSave }) {
     }, 0);
   };
 
+  // NEW HANDLER: Toggles preview and updates container width
+  const handleTogglePreview = () => {
+    setShowPreview((prev) => {
+      const newState = !prev;
+      // Set width based on the new state
+      setContainerWidth(newState ? "w-[60%]" : "w-1/2");
+      return newState;
+    });
+  };
+
   // Save handler: sanitize and export
   const handleSave = () => {
     const ta = textareaRef.current;
@@ -175,7 +190,8 @@ export default function FloatingCard({ onClose, onSave }) {
     <div className="fixed inset-0 w-full h-full bg-black/50 backdrop-blur-sm flex justify-center items-center z-1000">
       <div
         ref={containerRef}
-        className="w-1/2 h-[90%] bg-[#101010] shadow-2xl p-8 overflow-y-auto flex flex-col scrollbar-none rounded-xl">
+        // 3. APPLY DYNAMIC WIDTH: Use containerWidth state here
+        className={`${containerWidth} h-[90%] bg-[#101010] shadow-2xl p-8 overflow-y-auto flex flex-col scrollbar-none rounded-xl transition-all duration-300 ease-in-out`}>
         {/* Header: Allowed blocks + help */}
         <div className="mb-4 flex items-center justify-between">
           <div>
@@ -188,26 +204,40 @@ export default function FloatingCard({ onClose, onSave }) {
                   key={b.symbol}
                   className="px-3 py-1 bg-[#2f2f2f] rounded-md border border-[#3a3a3a]"
                   title={`${b.label} — ${b.shortcut ?? ""}`}>
-                  <span className="font-medium">{b.symbol}</span>
-                  <span className="ml-2 text-[#bdbdbd]">{b.label}</span>
+                  <span className="font-medium font-outfit text-white">
+                    {b.symbol}
+                  </span>
+                  <span className="ml-2 font-outfit text-[#bdbdbd]">
+                    {b.label}
+                  </span>
                 </div>
               ))}
-              <div className="px-3 py-1 bg-[#2f2f2f] rounded-md border border-[#3a3a3a]">
+              <div className="px-3 py-1 bg-[#2f2f2f] text-[#bdbdbd] rounded-md border border-[#3a3a3a]">
                 (no prefix) → Paragraph
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Preview Toggle Button */}
             <button
-              onClick={() => setShowPreview((s) => !s)}
-              className="px-3 py-1 rounded-md bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-sm"
-              aria-pressed={showPreview}>
-              {showPreview ? "Hide Preview" : "Show Preview"}
+              onClick={handleTogglePreview}
+              className="px-3 py-1 rounded-md bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-sm flex items-center gap-2 transition-colors"
+              aria-pressed={showPreview}
+              // The title (tooltip) clearly explains the action
+              title={showPreview ? "Hide Live Preview" : "Show Live Preview"}>
+              {/* Use the Eye icon when preview is OFF, and EyeOff when preview is ON */}
+              {showPreview ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+
+              {/* Optional: Use minimal text only on larger screens, but keep the core action clear */}
+              <span className="hidden sm:inline">
+                {showPreview ? "Hide" : "Preview"}
+              </span>
             </button>
-            <div className="text-xs text-[#9a9a9a]">
-              Ctrl/Cmd+Enter to save • Esc to close
-            </div>
           </div>
         </div>
 
@@ -217,7 +247,7 @@ export default function FloatingCard({ onClose, onSave }) {
             <button
               key={b.symbol}
               onClick={() => applyBlock(b.symbol)}
-              className="px-3 py-2 rounded-md font-outfit bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-sm"
+              className="px-3 py-2 rounded-md cursor-pointer font-outfit bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-sm"
               aria-label={`Insert ${b.label}`}>
               {b.label}
             </button>
@@ -225,7 +255,7 @@ export default function FloatingCard({ onClose, onSave }) {
 
           <button
             onClick={() => applyBlock("para")}
-            className="px-3 py-2 rounded-md font-outfit bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-sm"
+            className="px-3 py-2 rounded-md cursor-pointer font-outfit bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-sm"
             aria-label="Make paragraph">
             Paragraph
           </button>
@@ -238,13 +268,13 @@ export default function FloatingCard({ onClose, onSave }) {
             onInput={handleInput} // keep state in sync
             spellCheck="false"
             placeholder="Start writing your Markdown here..."
-            className="grow p-4 rounded-md bg-[#1e1e1e] text-[#cccccc] text-base leading-relaxed font-mono resize-none outline-none scrollbar-none"
+            className="grow p-4 rounded-md bg-[#1e1e1e] text-[#cccccc]  text-sm leading-relaxed font-mono resize-none outline-none scrollbar-none"
           />
 
           {showPreview && (
             // 1. Added 'min-h-0' to allow 'h-full' to work inside 'grow' flex container
             // 2. Added 'h-full' to enforce height and 'overflow-y-auto' for scrollbar
-            <div className="w-1/2 p-4 rounded-md bg-[#0f0f0f] text-[#eaeaea] overflow-y-auto h-full min-h-0">
+            <div className="w-1/2 p-4 rounded-md text-sm scrollbar-none bg-[#0f0f0f] text-[#eaeaea] overflow-y-auto h-full min-h-0">
               <MarkdownPreview text={markdownContent} />
             </div>
           )}
@@ -254,13 +284,13 @@ export default function FloatingCard({ onClose, onSave }) {
         <div className="flex justify-end gap-3 mt-5">
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-md bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-base font-outfit">
+            className="px-4 py-1 rounded-md cursor-pointer bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-base font-outfit">
             Cancel
           </button>
 
           <button
             onClick={handleSave}
-            className="px-5 py-2 rounded-md bg-[#007acc] text-white hover:bg-[#0090ff] text-base font-outfit">
+            className="px-4 py-1 rounded-md cursor-pointer bg-[#007acc] text-white hover:bg-[#0090ff] text-base font-outfit">
             Add Markdown
           </button>
         </div>
@@ -293,9 +323,7 @@ function MarkdownPreview({ text }) {
     if (/^>>\s?/.test(t))
       return (
         // Completely strip vertical margin
-        <div
-          key={i}
-          className="p-2 border-l-4 border-[#6b6b6b] bg-[#1a1a1a] my-0">
+        <div key={i} className="p-2 text-red-400 bg-[#1a1a1a] my-0">
           {t.replace(/^>>\s?/, "")}
         </div>
       );
@@ -324,7 +352,7 @@ function MarkdownPreview({ text }) {
   });
 
   // Added !m-0 !p-0 to the parent container to aggressively strip any residual margin/padding
-  return <div className="prose max-w-none !m-0 !p-0">{elements}</div>;
+  return <div className="prose max-w-none m-0 p-0">{elements}</div>;
 }
 
 /** sanitize: keep only allowed blocks and paragraphs, normalize spacing */
