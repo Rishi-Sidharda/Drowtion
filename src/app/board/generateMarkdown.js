@@ -3,33 +3,37 @@
 const STORAGE_KEY = "tenshin";
 const BOARD_DATA_KEY = "boardData";
 
+// --- Configuration is now handled via function arguments, but we keep
+// the line spacing constant locally as it's a structural element.
+const LINE_SPACING = 10;
+
 const generateGroupId = () =>
   `markdown-${Math.random().toString(36).substr(2, 9)}`;
 
-function wrapText(text, fontSize, maxWidth) {
-  const approxCharWidth = fontSize * 0.7;
+// NOTE: wrapText now takes charFactor as an argument instead of using a global const.
+function wrapText(text, fontSize, maxWidth, charFactor) {
+  // Uses the passed-in charFactor for consistent line wrapping
+  const approxCharWidth = fontSize * charFactor;
   const maxCharsPerLine = Math.floor(maxWidth / approxCharWidth);
   const words = text.split(" ");
   const lines = [];
   let currentLine = "";
-  let maxLineLength = 0; // Tracks the maximum character length of any line/word
+  let maxLineLength = 0;
 
   words.forEach((word) => {
-    // 1. Handle extremely long words that exceed the current maxCharsPerLine
+    // 1. Handle extremely long words
     if (word.length > maxCharsPerLine) {
-      // If the current line has content, push it first
       if (currentLine) {
         lines.push(currentLine);
         maxLineLength = Math.max(maxLineLength, currentLine.length);
       }
-      // Push the super-long word as its own line
       lines.push(word);
       maxLineLength = Math.max(maxLineLength, word.length);
-      currentLine = ""; // Start a new line after the long word
+      currentLine = "";
       return;
     }
 
-    // 2. Original wrapping logic for normal words
+    // 2. Original wrapping logic
     const nextLine = currentLine + (currentLine ? " " : "") + word;
 
     if (nextLine.length <= maxCharsPerLine) {
@@ -48,18 +52,26 @@ function wrapText(text, fontSize, maxWidth) {
     maxLineLength = Math.max(maxLineLength, currentLine.length);
   }
 
-  // Return both the wrapped lines and the max length found
   return { lines, maxLineLength };
 }
 
-export function generateMarkdownPage(centerX, centerY, markdownText) {
-  // --- Get current boardId from localStorage ---
+// Function now accepts configuration parameters as arguments with defaults
+export function generateMarkdownPage(
+  centerX,
+  centerY,
+  markdownText,
+  // New Configurable Parameters with current defaults
+  baseWidth = 650,
+  paddingLeft = 40,
+  paddingRight = 20,
+  charFactor = 0.6
+) {
+  // --- Get current boardId from localStorage (unchanged) ---
   let boardId = null;
   try {
     const tenshinRaw = localStorage.getItem(STORAGE_KEY);
     if (tenshinRaw) {
       const parsed = JSON.parse(tenshinRaw);
-      // Choose first board as current if no explicit selection
       boardId = Object.keys(parsed.boards || {})[0] || null;
     }
   } catch (e) {
@@ -72,7 +84,6 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
     );
   }
 
-  // Ensure markdownText is string
   if (typeof markdownText !== "string") {
     console.warn(
       "generateMarkdownPage received non-string content. Defaulting to empty string."
@@ -86,20 +97,15 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
 
   const groupId = generateGroupId();
 
-  // Base width settings
-  const BASE_PAGE_WIDTH = 650;
-  const padding = 40;
-  const lineSpacing = 10;
-
-  // This tracks the maximum required content width and starts with the default content width
-  let maxContentWidth = BASE_PAGE_WIDTH - 2 * padding;
+  // Content width starts with the space provided by the base width minus the configured paddings
+  let maxContentWidth = baseWidth - paddingLeft - paddingRight;
 
   const jitterX = (Math.random() - 0.5) * 2;
   const jitterY = (Math.random() - 0.5) * 2;
   const safeCenterX = Math.round((centerX + jitterX) * 100) / 100;
   const safeCenterY = Math.round((centerY + jitterY) * 100) / 100;
 
-  let contentHeight = padding;
+  let contentHeight = paddingLeft; // Use paddingLeft for top padding
   const elements = [];
 
   const lines = markdownText.split("\n");
@@ -108,7 +114,7 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
   lines.forEach((line) => {
     line = line.trim();
     if (!line) {
-      contentHeight += lineSpacing * 2;
+      contentHeight += LINE_SPACING * 2;
       processedLines.push({ type: "empty" });
       return;
     }
@@ -134,13 +140,13 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
       return;
     }
 
-    // Pass the current maxContentWidth for wrapping
-    const wrapResult = wrapText(line, fontSize, maxContentWidth);
+    // Pass the current maxContentWidth AND charFactor for wrapping
+    const wrapResult = wrapText(line, fontSize, maxContentWidth, charFactor);
     const wrappedLines = wrapResult.lines;
     const maxLineLength = wrapResult.maxLineLength;
 
-    // Calculate the width required for the longest line/word
-    const approxCharWidth = fontSize * 0.7;
+    // Calculate the width required for the longest line/word using the consistent factor
+    const approxCharWidth = fontSize * charFactor;
     const requiredLineWidth = maxLineLength * approxCharWidth;
 
     // Update the overall maximum required content width
@@ -153,23 +159,25 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
       isQuote,
       isMem,
     });
-    contentHeight += wrappedLines.length * (fontSize + lineSpacing);
+    contentHeight += wrappedLines.length * (fontSize + LINE_SPACING);
 
     if (fontSize === 36) contentHeight += 10;
   });
 
-  // Calculate the final page width, ensuring it's at least the base width
+  // Calculate the final page width, using the base width as the minimum
   const finalPageWidth = Math.max(
-    BASE_PAGE_WIDTH,
-    maxContentWidth + 2 * padding
+    baseWidth,
+    maxContentWidth + paddingLeft + paddingRight // Max content + configured margins
   );
-  const pageHeight = contentHeight + padding;
+
+  // Use paddingLeft for top/bottom margin consistency
+  const pageHeight = contentHeight + paddingLeft;
   const topY = safeCenterY - pageHeight / 2;
 
   // Calculate element positions based on the final, potentially wider, page
-  const contentWidth = finalPageWidth - 2 * padding;
-  const textStartX = safeCenterX - contentWidth / 2;
-  const textElementWidth = finalPageWidth - 2; // Full width for text element (minus margins/padding logic might be different)
+  const contentWidth = finalPageWidth - paddingLeft - paddingRight; // The actual width available for text
+  const pageRectLeftX = safeCenterX - finalPageWidth / 2;
+  const textStartX = pageRectLeftX + paddingLeft; // Align the text content 'paddingLeft' away from the left edge
 
   const pageRect = {
     type: "rectangle",
@@ -186,13 +194,13 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
   };
   elements.push(pageRect);
 
-  let currentY = topY + padding;
+  let currentY = topY + paddingLeft;
 
   processedLines.forEach((item) => {
     if (item.type === "empty") {
-      currentY += lineSpacing * 2;
+      currentY += LINE_SPACING * 2;
     } else if (item.type === "hr") {
-      const hrWidth = finalPageWidth - 2 * padding;
+      const hrWidth = finalPageWidth - paddingLeft - paddingRight;
       elements.push({
         type: "line",
         x: safeCenterX - hrWidth / 2, // Center the HR
@@ -218,7 +226,7 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
       item.lines.forEach((lineText) => {
         elements.push({
           type: "text",
-          x: textStartX, // Use the adjusted start X position
+          x: textStartX, // Use the adjusted start X position (aligned with left padding)
           y: currentY,
           text: lineText,
           fontSize: item.fontSize,
@@ -234,14 +242,14 @@ export function generateMarkdownPage(centerX, centerY, markdownText) {
           opacity: 100,
           groupIds: [groupId],
         });
-        currentY += item.fontSize + lineSpacing;
+        currentY += item.fontSize + LINE_SPACING;
       });
 
       if (item.fontSize === 36) currentY += 10;
     }
   });
 
-  // --- SAVE TO boardsData ---
+  // --- SAVE TO boardsData (unchanged) ---
   if (boardId) {
     try {
       const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);

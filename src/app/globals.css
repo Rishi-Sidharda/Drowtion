@@ -61,6 +61,15 @@
   }
 } */
 
+@font-face {
+  font-family: "excali";
+  src: url("/fonts/excali.woff2") format("woff2");
+  /* Adjust the path if you placed the font file elsewhere in 'public' */
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* Best practice for performance */
+}
+
 :root {
   --radius: 0.625rem;
   --card: oklch(1 0 0);

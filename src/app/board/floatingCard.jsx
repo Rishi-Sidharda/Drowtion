@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import { drawExcalidrawElements } from "./boardApi";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X, Save } from "lucide-react";
 
 /**
  * FloatingCard - Improved Markdown editor
@@ -222,7 +222,7 @@ export default function FloatingCard({ onClose, onSave }) {
             {/* Preview Toggle Button */}
             <button
               onClick={handleTogglePreview}
-              className="px-3 py-1 rounded-md bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-sm flex items-center gap-2 transition-colors"
+              className="px-3 py-1 rounded-md cursor-pointer bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-sm flex  items-center gap-2 transition-colors"
               aria-pressed={showPreview}
               // The title (tooltip) clearly explains the action
               title={showPreview ? "Hide Live Preview" : "Show Live Preview"}>
@@ -268,31 +268,47 @@ export default function FloatingCard({ onClose, onSave }) {
             onInput={handleInput} // keep state in sync
             spellCheck="false"
             placeholder="Start writing your Markdown here..."
-            className="grow p-4 rounded-md bg-[#1e1e1e] text-[#cccccc]  text-sm leading-relaxed font-mono resize-none outline-none scrollbar-none"
+            className="grow p-4 rounded-sm bg-[#1e1e1e] text-[#cccccc]  text-sm leading-relaxed font-mono resize-none outline-none scrollbar-none"
           />
 
           {showPreview && (
             // 1. Added 'min-h-0' to allow 'h-full' to work inside 'grow' flex container
             // 2. Added 'h-full' to enforce height and 'overflow-y-auto' for scrollbar
-            <div className="w-1/2 p-4 rounded-md text-sm scrollbar-none bg-[#0f0f0f] text-[#eaeaea] overflow-y-auto h-full min-h-0">
+            <div
+              style={{ fontFamily: "excali" }}
+              className="w-1/2 border-2 border-[#bdbdbd] p-4  text-sm scrollbar-none bg-[#0f0f0f] text-[#eaeaea] overflow-y-auto h-full min-h-0">
               <MarkdownPreview text={markdownContent} />
             </div>
           )}
         </div>
 
         {/* Bottom Cancel/Save Buttons */}
-        <div className="flex justify-end gap-3 mt-5">
-          <button
-            onClick={onClose}
-            className="px-4 py-1 rounded-md cursor-pointer bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-base font-outfit">
-            Cancel
-          </button>
+        <div className="flex justify-between gap-3 mt-5 w-full">
+          {/* 1. Cancel Button (Moved to the far left) */}
+          <div className="flex flex-col items-start">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-md cursor-pointer bg-[#2e2e2e] text-[#cccccc] hover:bg-[#3a3a3a] text-base font-outfit flex items-center gap-2 transition-colors">
+              <X className="w-4 h-4" />
+              Cancel
+            </button>
+            {/* Shortcut Hint for Cancel */}
+            <div className="text-xs text-[#888888] mt-1 font-mono">"Esc"</div>
+          </div>
 
-          <button
-            onClick={handleSave}
-            className="px-4 py-1 rounded-md cursor-pointer bg-[#007acc] text-white hover:bg-[#0090ff] text-base font-outfit">
-            Add Markdown
-          </button>
+          {/* 2. Add Markdown Button (Stays on the far right) */}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 rounded-md cursor-pointer bg-[#007acc] text-white hover:bg-[#0090ff] text-base font-outfit flex items-center gap-2 transition-colors">
+              <Save className="w-4 h-4" />
+              Add Markdown
+            </button>
+            {/* Shortcut Hint for Save */}
+            <div className="text-xs text-[#888888] mt-1 font-mono">
+              "Cmd/Ctrl + Enter"
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -319,25 +335,25 @@ function MarkdownPreview({ text }) {
 
     if (/^---$/.test(t))
       // Completely strip vertical margin, use only mb-1 for separation from text
-      return <hr key={i} className="my-0 border-t border-[#2a2a2a] mb-1" />;
+      return <hr key={i} className="my-0 border-t border-white mb-1" />;
     if (/^>>\s?/.test(t))
       return (
         // Completely strip vertical margin
-        <div key={i} className="p-2 text-red-400 bg-[#1a1a1a] my-0">
+        <div key={i} className="pl-1 text-red-400  my-0">
           {t.replace(/^>>\s?/, "")}
         </div>
       );
     if (/^>\s?/.test(t))
       return (
         // Completely strip vertical margin
-        <blockquote key={i} className="pl-3 italic text-[#bfbfbf] my-0">
+        <blockquote key={i} className="pl-1 text-[#bfbfbf] my-0">
           {t.replace(/^>\s?/, "")}
         </blockquote>
       );
     if (/^#\s?/.test(t))
       return (
         // Strip bottom margin completely
-        <h3 key={i} className="text-lg font-semibold mt-4 mb-0">
+        <h3 key={i} className="text-xl mt-4 mb-0">
           {t.replace(/^#\s?/, "")}
         </h3>
       );
