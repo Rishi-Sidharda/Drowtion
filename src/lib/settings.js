@@ -1,3 +1,17 @@
+import {
+  Brush,
+  PenTool,
+  Rocket,
+  Lightbulb,
+  Flame,
+  Target,
+  Star,
+  Palette,
+  Folder,
+  Bolt,
+  PaintBucket,
+} from "lucide-react";
+
 export const ICONS = {
   Brush,
   PenTool,

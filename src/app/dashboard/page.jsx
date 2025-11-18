@@ -3,20 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-
-import {
-  Brush,
-  PenTool,
-  Rocket,
-  Lightbulb,
-  Flame,
-  Target,
-  Star,
-  Palette,
-  Folder,
-  Bolt,
-  PaintBucket,
-} from "lucide-react";
+import { ICONS, FOLDER_COLORS } from "@/lib/settings";
 import BoardMenu from "./menus/BoardMenu";
 import FolderMenu from "./menus/FolderMenu";
 import Sidebar from "./sections/Sidebar";
@@ -74,37 +61,10 @@ export default function DashboardPage() {
   // context: when user clicks a folder in sidebar, this becomes selected; new boards created while selected go into that folder
   const [selectedFolderId, setSelectedFolderId] = useState("none");
 
-  const ICONS = {
-    Brush,
-    PenTool,
-    Rocket,
-    Lightbulb,
-    Flame,
-    Target,
-    Star,
-    Palette,
-    Folder,
-    Bolt,
-    PaintBucket,
-  };
-
   const availableIcons = Object.keys(ICONS);
 
-  const FOLDER_COLORS = [
-    "#ef4444",
-    "#f97316",
-    "#f59e0b",
-    "#10b981",
-    "#06b6d4",
-    "#3b82f6",
-    "#8b5cf6",
-    "#ec4899",
-    "#6366f1",
-    "#a3a3a3",
-  ];
-
-  const STORAGE_KEY = "tenshin";
-  const BOARD_DATA_KEY = "boardData";
+  const [STORAGE_KEY, SET_STORAGE_KEY] = useState("tenshin");
+  const [BOARD_DATA_KEY, SET_BOARD_DATA_KEY] = useState("boardData");
 
   function loadFromStorage() {
     try {
@@ -187,8 +147,6 @@ export default function DashboardPage() {
 
   function saveToStorage({ folders, boards, ui }) {
     try {
-      const STORAGE_KEY = "tenshin";
-
       // Load existing tenshin data to preserve anything not included in the update
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
         boards: {},
@@ -267,7 +225,6 @@ export default function DashboardPage() {
     }
 
     saveToStorage(newData);
-    router.push(`/board?id=${encodeURIComponent(id)}`);
   };
 
   const openBoard = (id) => router.push(`/board?id=${encodeURIComponent(id)}`);
