@@ -31,11 +31,6 @@ import { loadFromStorage } from "@/lib/localstorage";
 
 export default function DashboardPage() {
   const router = useRouter();
-
-  // Storage key
-  const STORAGE_KEY = "tenshin";
-  const BOARD_DATA_KEY = "boardData";
-
   // app state
   const [user, setUser] = useState(null);
   const [data, setData] = useState({
@@ -80,7 +75,6 @@ export default function DashboardPage() {
   // context: when user clicks a folder in sidebar, this becomes selected; new boards created while selected go into that folder
   const [selectedFolderId, setSelectedFolderId] = useState("none");
 
-  // icons and colors
   const ICONS = {
     Brush,
     PenTool,
@@ -94,6 +88,7 @@ export default function DashboardPage() {
     Bolt,
     PaintBucket,
   };
+
   const availableIcons = Object.keys(ICONS);
 
   const FOLDER_COLORS = [

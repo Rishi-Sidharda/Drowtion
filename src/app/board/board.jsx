@@ -41,7 +41,6 @@ export default function Board() {
 
   const [selectedMarkdownText, setSelectedMarkdownText] = useState(null);
   const [selectedMarkdownGroupId, setSelectedMarkdownGroupId] = useState(null);
-  const [markdownPosition, setMarkdownPosition] = useState({ x: 0, y: 0 });
 
   const BOARD_DATA_KEY = "boardData";
 
@@ -186,9 +185,6 @@ export default function Board() {
     setIsEditingMarkdown(true);
   };
 
-  // =======================================================
-  //  HIGH-PERFORMANCE SAVE HANDLER (Drop-in replacement)
-  // =======================================================
   const handleSave = () => {
     if (!api || !boardId) return;
     setIsSaving(true);
@@ -196,9 +192,6 @@ export default function Board() {
     const STORAGE_KEY = "tenshin";
     const BOARD_DATA_KEY = "boardData";
 
-    // ---------------------------------------------------
-    // 1) GET SCENE STATE (CHEAPEST POSSIBLE EXTRACTION)
-    // ---------------------------------------------------
     const elements = api.getSceneElements();
     const files = api.getFiles();
 
@@ -215,9 +208,6 @@ export default function Board() {
       // any other stable fields you want to keep
     };
 
-    // ---------------------------------------------------
-    // 2) LOAD EXISTING STORED DATA
-    // ---------------------------------------------------
     const tenshin = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
       boards: {},
       folders: {},
@@ -230,9 +220,6 @@ export default function Board() {
 
     const oldRegistry = oldBoard.markdown_registry || {};
 
-    // ---------------------------------------------------
-    // 3) SUPER-FAST HASHING (only summaries)
-    // ---------------------------------------------------
     const newHashes = {
       elements:
         elements.length + ":" + (elements[elements.length - 1]?.version ?? 0),
@@ -255,9 +242,6 @@ export default function Board() {
       markdown: oldBoard.markdown_hash,
     };
 
-    // ---------------------------------------------------
-    // 4) INCREMENTAL UPDATE (only changed data is written)
-    // ---------------------------------------------------
     const updatedBoard = { ...oldBoard };
 
     if (oldHashes.elements !== newHashes.elements) {
@@ -282,9 +266,6 @@ export default function Board() {
 
     boardsData[boardId] = updatedBoard;
 
-    // ---------------------------------------------------
-    // 5) METADATA UPDATE (only if something actually changed)
-    // ---------------------------------------------------
     const somethingChanged =
       oldHashes.elements !== newHashes.elements ||
       oldHashes.files !== newHashes.files ||
@@ -302,9 +283,6 @@ export default function Board() {
       tenshin.boards[boardId].updatedAt = new Date().toISOString();
     }
 
-    // ---------------------------------------------------
-    // 6) SAVE TO LOCALSTORAGE (only two writes)
-    // ---------------------------------------------------
     localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tenshin));
 
@@ -436,7 +414,6 @@ export default function Board() {
             deleteMarkdown={() => {
               deleteMarkdown();
             }}
-            markdownPosition={markdownPosition}
           />
         )}
       </div>

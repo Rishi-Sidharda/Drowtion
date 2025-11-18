@@ -9,11 +9,6 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-/**
- * Updates the current authenticated user's plan.
- * @param {string} newPlan - The plan to set (e.g., "free", "pro", "premium").
- * @returns {Promise<{data: any, error: any}>}
- */
 export async function updateUserPlan(newPlan) {
   const { data: user, error: userError } = await supabase.auth.getUser();
 

@@ -79,9 +79,6 @@ export default function Profile() {
           <Button disabled={updating} onClick={() => handlePlanChange("pro")}>
             Pro
           </Button>
-          <Button disabled={updating} onClick={() => handlePlanChange("ultra")}>
-            Ultra
-          </Button>
         </div>
       </div>
     </div>
