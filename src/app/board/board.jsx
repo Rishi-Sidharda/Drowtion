@@ -8,6 +8,8 @@ import { setExcalidrawApi } from "./boardApi";
 import FloatingCard from "./floatingCard";
 import CommandPallet from "./commandPallet";
 import FloatingEditMarkdownCard from "./floatingEditMarkdownCard";
+// Import supabase to get the current user
+import { supabase } from "@/lib/supabaseClient";
 
 const Excalidraw = dynamic(
   async () => (await import("@excalidraw/excalidraw")).Excalidraw,
@@ -32,6 +34,10 @@ export default function Board() {
   const boardId = searchParams.get("id");
 
   const [api, setApi] = useState(null);
+  const [user, setUser] = useState(null); // ADDED: User state
+  const [STORAGE_KEY, setSTORAGE_KEY] = useState(null); // ADDED: Dynamic key state
+  const [BOARD_DATA_KEY, setBOARD_DATA_KEY] = useState(null); // ADDED: Dynamic key state
+
   const [showFloatingCard, setShowFloatingCard] = useState(false);
   const [showCommandPallet, setShowCommandPallet] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -42,9 +48,42 @@ export default function Board() {
   const [selectedMarkdownText, setSelectedMarkdownText] = useState(null);
   const [selectedMarkdownGroupId, setSelectedMarkdownGroupId] = useState(null);
 
-  const BOARD_DATA_KEY = "boardData";
+  // ----------------------------------------------------------------------
+  // 1. AUTH & KEY SETUP
+  // ----------------------------------------------------------------------
+
+  // ✅ Get User and Set Dynamic Keys
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        const currentUser = data?.user || null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          const userId = currentUser.id;
+          // Set user-specific keys
+          setSTORAGE_KEY(`tenshin-${userId}`);
+          setBOARD_DATA_KEY(`boardData-${userId}`);
+        } else {
+          // Redirect if not authenticated (same as Dashboard)
+          window.location.href = "/signin";
+        }
+      } catch (e) {
+        console.error("supabase getUser failed", e);
+      }
+    };
+    getUser();
+  }, []);
+
+  // ----------------------------------------------------------------------
+  // 2. Data Handlers (Updated to use dynamic keys)
+  // ----------------------------------------------------------------------
 
   const handleChange = (elements, state) => {
+    // Return early if keys aren't ready
+    if (!BOARD_DATA_KEY) return;
+
     const { selectedElementIds } = state;
 
     // No selection, hide button and clear text
@@ -57,7 +96,7 @@ export default function Board() {
     // Get selected elements
     const selectedElements = elements.filter((el) => selectedElementIds[el.id]);
 
-    // Load board data from localStorage
+    // Load board data from localStorage using dynamic key
     const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
     const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
     const markdownRegistry = boardsData[boardId]?.markdown_registry || {};
@@ -78,9 +117,9 @@ export default function Board() {
         id.startsWith("markdown-")
       );
 
-      // Load board data from localStorage
-      const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
-      const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
+      // Load board data from localStorage (already done above, but kept structure similar)
+      // const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY); // Re-load not necessary
+      // const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
 
       // Get the markdown text from registry
       const markdownTextRaw =
@@ -98,66 +137,8 @@ export default function Board() {
     }
   };
 
-  // ✅ Register the Excalidraw API
-  useEffect(() => {
-    if (api) setExcalidrawApi(api);
-  }, [api]);
-
-  // ✅ Keyboard shortcut for Command Palette
-  useEffect(() => {
-    if (!api) return;
-    const handleKeyDown = (event) => {
-      const isControlKey = event.ctrlKey || event.metaKey;
-      const isForwardSlash = event.key === "/";
-      if (isControlKey && isForwardSlash) {
-        event.preventDefault();
-        setShowCommandPallet(true);
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [api]);
-
-  // ✅ Load board data from localStorage after API ready
-  useEffect(() => {
-    if (!api || !boardId || isLoaded) return;
-
-    const STORAGE_KEY = "tenshin";
-    const BOARD_DATA_KEY = "boardData";
-
-    const tenshinRaw = localStorage.getItem(STORAGE_KEY);
-    const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
-
-    const tenshin = tenshinRaw
-      ? JSON.parse(tenshinRaw)
-      : { boards: {}, folders: {}, ui: { collapsedFolders: {} } };
-    const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
-
-    const boardContent = boardsData[boardId];
-
-    if (boardContent) {
-      const fixedAppState = {
-        ...boardContent.appState,
-        collaborators: new Map(),
-      };
-
-      // Delay to ensure Excalidraw is initialized
-      setTimeout(() => {
-        api.updateScene({
-          elements: boardContent.elements || [],
-          appState: fixedAppState,
-          files: boardContent.files || {},
-        });
-        api.scrollToContent(boardContent.elements || []);
-        setIsLoaded(true);
-      }, 300);
-    } else {
-      setIsLoaded(true);
-    }
-  }, [api, boardId, isLoaded]);
-
   const deleteMarkdown = () => {
-    if (!selectedMarkdownGroupId) return;
+    if (!selectedMarkdownGroupId || !BOARD_DATA_KEY) return; // Guard against missing key
 
     // 1️⃣ Remove matching elements from the canvas
     const currentElements = api.getSceneElements();
@@ -167,6 +148,7 @@ export default function Board() {
 
     api.updateScene({ elements: updatedElements });
 
+    // 2️⃣ Update markdown_registry in local storage
     const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
     const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
 
@@ -182,11 +164,8 @@ export default function Board() {
   };
 
   const handleSave = () => {
-    if (!api || !boardId) return;
+    if (!api || !boardId || !STORAGE_KEY || !BOARD_DATA_KEY) return; // Guard against missing keys
     setIsSaving(true);
-
-    const STORAGE_KEY = "tenshin";
-    const BOARD_DATA_KEY = "boardData";
 
     const elements = api.getSceneElements();
     const files = api.getFiles();
@@ -204,18 +183,20 @@ export default function Board() {
       // any other stable fields you want to keep
     };
 
+    // Use dynamic keys to load data
     const tenshin = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
       boards: {},
       folders: {},
       ui: { collapsedFolders: {} },
+      userId: user?.id, // Ensure userId is passed if needed for future proofing
     };
 
     const boardsData = JSON.parse(localStorage.getItem(BOARD_DATA_KEY)) || {};
 
     const oldBoard = boardsData[boardId] || {};
-
     const oldRegistry = oldBoard.markdown_registry || {};
 
+    // Hashing logic remains the same...
     const newHashes = {
       elements:
         elements.length + ":" + (elements[elements.length - 1]?.version ?? 0),
@@ -255,6 +236,7 @@ export default function Board() {
       updatedBoard.appState_hash = newHashes.appState;
     }
 
+    // Markdown hash only updates if registry size changes in the dashboard
     if (oldHashes.markdown !== newHashes.markdown) {
       updatedBoard.markdown_registry = { ...oldRegistry };
       updatedBoard.markdown_hash = newHashes.markdown;
@@ -279,15 +261,84 @@ export default function Board() {
       tenshin.boards[boardId].updatedAt = new Date().toISOString();
     }
 
+    // Set userId field in tenshin data structure
+    if (user) {
+      tenshin.userId = user.id;
+    }
+
+    // Use dynamic keys to save data
     localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tenshin));
 
     setTimeout(() => setIsSaving(false), 300);
   };
 
+  // ----------------------------------------------------------------------
+  // 3. Effects (Updated load logic)
+  // ----------------------------------------------------------------------
+
+  // ✅ Register the Excalidraw API
+  useEffect(() => {
+    if (api) setExcalidrawApi(api);
+  }, [api]);
+
+  // ✅ Keyboard shortcut for Command Palette
+  useEffect(() => {
+    if (!api) return;
+    const handleKeyDown = (event) => {
+      const isControlKey = event.ctrlKey || event.metaKey;
+      const isForwardSlash = event.key === "/";
+      if (isControlKey && isForwardSlash) {
+        event.preventDefault();
+        setShowCommandPallet(true);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [api]);
+
+  // ✅ Load board data from localStorage after API and KEYS ready
+  useEffect(() => {
+    // Only proceed if API, boardId, and both keys are ready, and we haven't loaded yet
+    if (!api || !boardId || isLoaded || !STORAGE_KEY || !BOARD_DATA_KEY) return;
+
+    // Use dynamic keys
+    const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
+
+    const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
+
+    const boardContent = boardsData[boardId];
+
+    if (boardContent) {
+      // Fix appState: collaborators must be a Map, not a plain object/array
+      const fixedAppState = {
+        ...boardContent.appState,
+        collaborators: new Map(),
+      };
+
+      // Delay to ensure Excalidraw is initialized
+      setTimeout(() => {
+        api.updateScene({
+          elements: boardContent.elements || [],
+          appState: fixedAppState,
+          files: boardContent.files || {},
+        });
+        // Scroll to content or center view
+        api.scrollToContent(boardContent.elements || []);
+        setIsLoaded(true);
+      }, 300);
+    } else {
+      setIsLoaded(true);
+    }
+  }, [api, boardId, isLoaded, STORAGE_KEY, BOARD_DATA_KEY]); // DEPENDS ON NEW KEYS
+
   const handleEditMarkdown = () => {
     setIsEditingMarkdown(true);
   };
+
+  // ----------------------------------------------------------------------
+  // 4. Render
+  // ----------------------------------------------------------------------
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
@@ -329,7 +380,7 @@ export default function Board() {
               );
             }
 
-            // Default: show Add Component button
+            // Default: show Command Palette button
             return (
               <div
                 style={{

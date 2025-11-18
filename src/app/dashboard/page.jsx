@@ -63,10 +63,23 @@ export default function DashboardPage() {
 
   const availableIcons = Object.keys(ICONS);
 
-  const [STORAGE_KEY, SET_STORAGE_KEY] = useState("tenshin");
-  const [BOARD_DATA_KEY, SET_BOARD_DATA_KEY] = useState("boardData");
+  // --- MODIFIED: Initial state is null, will be set after auth ---
+  const [STORAGE_KEY, SET_STORAGE_KEY] = useState(null);
+  const [BOARD_DATA_KEY, SET_BOARD_DATA_KEY] = useState(null);
+  // ----------------------------------------------------------------
 
   function loadFromStorage() {
+    if (!STORAGE_KEY || !BOARD_DATA_KEY) {
+      // Return default data if keys are not ready
+      return {
+        folders: {},
+        boards: {},
+        ui: { collapsedFolders: {} },
+        boardsData: {},
+        userId: null,
+      };
+    }
+
     try {
       const tenshinRaw = localStorage.getItem(STORAGE_KEY);
       const boardsDataRaw = localStorage.getItem(BOARD_DATA_KEY);
@@ -84,10 +97,12 @@ export default function DashboardPage() {
           if (folders[fid].expanded === undefined) folders[fid].expanded = true;
         });
 
-        return { folders, boards, ui, boardsData };
+        // --- MODIFIED: Return userId from storage ---
+        return { folders, boards, ui, boardsData, userId: parsed.userId };
+        // --------------------------------------------
       }
 
-      // migrate from old "boards" key if present
+      // --- Migration from old "boards" key (Only runs if new user-specific keys are empty) ---
       const oldRaw = localStorage.getItem("boards");
       if (oldRaw) {
         const oldParsed = JSON.parse(oldRaw);
@@ -112,49 +127,69 @@ export default function DashboardPage() {
         });
 
         const newTop = { folders: {}, boards, ui: { collapsedFolders: {} } };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newTop));
+        const currentUserId = user ? user.id : "unknown-migrated";
+        // --- MODIFIED: Add userId to the migrated data before saving ---
+        const newTopWithId = { ...newTop, userId: currentUserId };
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newTopWithId));
         localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(newBoardsData));
 
         try {
           localStorage.removeItem("boards");
         } catch (e) {}
 
+        // --- MODIFIED: Return userId for state ---
         return {
           folders: {},
           boards,
           ui: { collapsedFolders: {} },
           boardsData: newBoardsData,
+          userId: currentUserId,
         };
+        // -------------------------------------------
       }
 
       // nothing found
+      // --- MODIFIED: Return current user ID if nothing found ---
       return {
         folders: {},
         boards: {},
         ui: { collapsedFolders: {} },
         boardsData: {},
+        userId: user ? user.id : null,
       };
+      // ---------------------------------------------------------
     } catch (e) {
       console.error("loadFromStorage error", e);
+      // --- MODIFIED: Return current user ID on error ---
       return {
         folders: {},
         boards: {},
         ui: { collapsedFolders: {} },
         boardsData: {},
+        userId: user ? user.id : null,
       };
+      // -------------------------------------------------
     }
   }
 
   function saveToStorage({ folders, boards, ui }) {
+    if (!STORAGE_KEY) return; // Guard clause: do nothing if keys aren't set
+
     try {
       // Load existing tenshin data to preserve anything not included in the update
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
         boards: {},
         folders: {},
         ui: { collapsedFolders: {} },
+        // --- MODIFIED: Ensure existing structure has userId ---
+        userId: user ? user.id : null,
       };
 
       const merged = {
+        // --- ADDED: Ensure userId is always saved ---
+        userId: existing.userId || (user ? user.id : null),
+        // ---------------------------------------------
         folders: folders ?? existing.folders,
         boards: boards ?? existing.boards,
         ui: ui ?? existing.ui,
@@ -164,12 +199,13 @@ export default function DashboardPage() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
 
       // Update app state
-      setData({
+      setData((currentData) => ({
+        ...currentData, // Keep boardsData intact
         folders: merged.folders,
         boards: merged.boards,
         ui: merged.ui,
-        boardsData: undefined, // leave untouched
-      });
+        // userId doesn't need to be in the main data state, but is now in local storage
+      }));
     } catch (e) {
       console.error("saveToStorage error", e);
     }
@@ -205,17 +241,14 @@ export default function DashboardPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    const newBoardData = {
-      elements: [],
-      appState: {},
-      files: {},
-    };
-
+    // Note: boardData is implicitly handled by the dashboard logic but not saved via saveToStorage
+    // We assume the board component will save the actual elements data under the BOARD_DATA_KEY
+    // For the dashboard metadata save:
     const newData = {
       folders: { ...(data.folders || {}) },
       boards: { ...(data.boards || {}), [id]: newMeta },
-      boardsData: { ...(data.boardsData || {}), [id]: newBoardData },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
+      // boardsData is intentionally omitted here as saveToStorage doesn't handle it
     };
 
     if (assignedFolderId && newData.folders[assignedFolderId]) {
@@ -225,6 +258,10 @@ export default function DashboardPage() {
     }
 
     saveToStorage(newData);
+    // Note: The board data (elements, appState, files) is currently *not* saved to local storage
+    // by this function. It should be handled by an external function (like the board page itself)
+    // using the BOARD_DATA_KEY, or we would need to integrate that logic here.
+    // For now, we trust the rest of the application to handle the content data.
   };
 
   const openBoard = (id) => router.push(`/board?id=${encodeURIComponent(id)}`);
@@ -233,12 +270,12 @@ export default function DashboardPage() {
     const newData = {
       folders: { ...(data.folders || {}) },
       boards: { ...(data.boards || {}) },
-      boardsData: { ...(data.boardsData || {}) },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
     const board = newData.boards[id];
     if (!board) return;
 
+    // Remove board ID from any folder list
     Object.keys(newData.folders).forEach((fid) => {
       const f = { ...newData.folders[fid] };
       if (Array.isArray(f.boards) && f.boards.includes(id)) {
@@ -248,7 +285,17 @@ export default function DashboardPage() {
     });
 
     delete newData.boards[id];
-    delete newData.boardsData[id];
+    // We would need to delete the board content from localStorage as well
+    if (BOARD_DATA_KEY) {
+      try {
+        const boardsDataRaw = localStorage.getItem(BOARD_DATA_KEY);
+        const boardsData = boardsDataRaw ? JSON.parse(boardsDataRaw) : {};
+        delete boardsData[id];
+        localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
+      } catch (e) {
+        console.error("Failed to delete board data from storage", e);
+      }
+    }
 
     saveToStorage(newData);
     setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
@@ -270,7 +317,8 @@ export default function DashboardPage() {
     const newData = { ...data, boards: { ...(data.boards || {}) } };
     if (!newData.boards[id]) return;
     newData.boards[id].name = trimmed;
-    saveToStorage({ ...newData, boardsData: data.boardsData });
+    // boardsData is now correctly left out of saveToStorage argument
+    saveToStorage(newData);
     setEditingBoardId(null);
     setErrorMessage("");
   };
@@ -284,7 +332,7 @@ export default function DashboardPage() {
     const newData = { ...data, boards: { ...(data.boards || {}) } };
     if (!newData.boards[id]) return;
     newData.boards[id].icon = iconName;
-    saveToStorage({ ...newData, boardsData: data.boardsData });
+    saveToStorage(newData);
     setEditingIconId(null);
   };
 
@@ -292,7 +340,7 @@ export default function DashboardPage() {
     const newData = { ...data, boards: { ...(data.boards || {}) } };
     if (!newData.boards[id]) return;
     newData.boards[id].isFavorite = !newData.boards[id].isFavorite;
-    saveToStorage({ ...newData, boardsData: data.boardsData });
+    saveToStorage(newData);
     setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
   };
 
@@ -300,7 +348,6 @@ export default function DashboardPage() {
     const newData = {
       boards: { ...(data.boards || {}) },
       folders: { ...(data.folders || {}) },
-      boardsData: { ...(data.boardsData || {}) },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
     const board = newData.boards[boardId];
@@ -312,6 +359,7 @@ export default function DashboardPage() {
       return;
     }
 
+    // Remove from previous folder
     Object.keys(newData.folders).forEach((fid) => {
       const f = { ...newData.folders[fid] };
       if (Array.isArray(f.boards) && f.boards.includes(boardId)) {
@@ -320,11 +368,13 @@ export default function DashboardPage() {
       }
     });
 
+    // Update board metadata
     newData.boards[boardId] = {
       ...board,
       folderId: folderId || null,
     };
 
+    // Add to new folder
     if (folderId && newData.folders[folderId]) {
       const dest = { ...newData.folders[folderId] };
       dest.boards = Array.from(new Set([...(dest.boards || []), boardId]));
@@ -359,7 +409,6 @@ export default function DashboardPage() {
     const newData = {
       folders: { ...(data.folders || {}), [id]: newFolder },
       boards: { ...(data.boards || {}) },
-      boardsData: { ...(data.boardsData || {}) },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
     if (!newData.ui.collapsedFolders) newData.ui.collapsedFolders = {};
@@ -410,16 +459,17 @@ export default function DashboardPage() {
     const newData = {
       folders: { ...(data.folders || {}) },
       boards: { ...(data.boards || {}) },
-      boardsData: { ...(data.boardsData || {}) },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
     };
 
     const folder = newData.folders[id];
-    (folder.boards || []).forEach((bId) => {
+    // Move boards inside the folder to 'no folder'
+    (folder?.boards || []).forEach((bId) => {
       if (newData.boards[bId]) newData.boards[bId].folderId = null;
     });
 
     delete newData.folders[id];
+    // Remove collapsed state
     if (
       newData.ui.collapsedFolders &&
       newData.ui.collapsedFolders[id] !== undefined
@@ -443,7 +493,16 @@ export default function DashboardPage() {
         const { data } = await supabase.auth.getUser();
         const currentUser = data?.user || null;
         setUser(currentUser);
-        if (!currentUser) window.location.href = "/signin";
+
+        // --- ADDED: Set user-specific storage keys ---
+        if (currentUser) {
+          const userId = currentUser.id;
+          SET_STORAGE_KEY(`tenshin-${userId}`);
+          SET_BOARD_DATA_KEY(`boardData-${userId}`);
+        } else {
+          window.location.href = "/signin";
+        }
+        // ----------------------------------------------
       } catch (e) {
         console.error("supabase getUser failed", e);
       }
@@ -451,14 +510,21 @@ export default function DashboardPage() {
     getUser();
   }, []);
 
+  // --- MODIFIED: Data loading now waits for user-specific keys ---
   useEffect(() => {
-    const loaded = loadFromStorage();
-    setData(loaded);
-    if (!loaded.ui) {
-      const newData = { ...loaded, ui: { collapsedFolders: {} } };
-      saveToStorage(newData);
+    if (STORAGE_KEY && BOARD_DATA_KEY) {
+      const loaded = loadFromStorage();
+      setData(loaded);
+
+      // Ensure UI state is initialized if missing
+      if (!loaded.ui || !loaded.ui.collapsedFolders) {
+        const newData = { ...loaded, ui: { collapsedFolders: {} } };
+        // Save immediately to fix the UI structure if it's broken/missing
+        saveToStorage(newData);
+      }
     }
-  }, []);
+  }, [STORAGE_KEY, BOARD_DATA_KEY]);
+  // -------------------------------------------------------------
 
   // ----------------------- HELPERS -----------------------
   function timeAgo(dateString) {
