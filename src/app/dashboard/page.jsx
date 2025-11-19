@@ -634,6 +634,11 @@ export default function DashboardPage() {
     setProfilePageVisibility(false);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/signin";
+  };
+
   // Render
   return (
     <div className="min-h-screen bg-[#191919] text-gray-100 flex flex-col">
@@ -653,6 +658,7 @@ export default function DashboardPage() {
           selectedFolderId={selectedFolderId}
           setSelectedFolderId={setSelectedFolderId}
           showProfilePage={showProfilePage}
+          handleLogout={handleLogout}
         />
       </div>
       <main className="flex-1 flex">
@@ -666,6 +672,7 @@ export default function DashboardPage() {
                 hideProfilePage={hideProfilePage}
                 authUser={user}
                 initialProfile={userProfile}
+                handleLogout={handleLogout}
               />
             ) : (
               // 2. If profilePageVisibility is FALSE, show the main dashboard components

@@ -4,7 +4,7 @@ import { updateUserPlan } from "@/lib/dbActions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, LogOut } from "lucide-react";
 
 /* -----------------------------------------
    PRO FEATURES COMPONENT (embedded inline)
@@ -130,6 +130,7 @@ export default function ProfilePage({
   hideProfilePage,
   authUser,
   initialProfile,
+  handleLogout,
 }) {
   const [profile, setProfile] = useState(initialProfile);
   const [updating, setUpdating] = useState(false);
@@ -228,22 +229,32 @@ export default function ProfilePage({
                 handlePlanChange(profile.plan === "free" ? "pro" : "free")
               }
               disabled={updating}
-              className="w-full bg-[#ff8383] cursor-pointer hover:bg-[#c96a6a] text-black font-bold rounded-xl shadow-md px-4 py-2 transition duration-200">
+              className="w-full bg-[#ff8383] cursor-pointer hover:bg-[#c96a6a] text-black font-bold rounded-lg shadow-md px-4 py-2 transition duration-200">
               {updating ? "Processing..." : manageButtonText}
             </Button>
 
             <h2 className="text-xl font-semibold border-b border-[#2a2a2a] pb-2">
               Support
             </h2>
+
             <p className="text-gray-400 text-sm">
               For technical issues or billing inquiries, please contact our
               dedicated support team.
             </p>
+
             <a
               href="mailto:support@tenshin.app"
               className="text-lg underline text-gray-300 hover:text-[#ff8383] transition duration-200">
               support@tenshin.app
             </a>
+
+            {/* Logout Button */}
+            <Button
+              onClick={handleLogout}
+              className="w-full  cursor-pointer border border-red-400 mt-5 text-red-500 hover:bg-[#1a1a1a] rounded-lg shadow-md px-4 py-2 flex items-center justify-center gap-2 transition duration-200">
+              <LogOut className="w-5 font-bold mr-3 h-5" />
+              Logout
+            </Button>
           </div>
         </div>
       </div>

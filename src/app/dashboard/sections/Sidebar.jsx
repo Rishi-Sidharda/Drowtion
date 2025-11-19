@@ -32,6 +32,7 @@ export default function Sidebar({
   selectedFolderId,
   setSelectedFolderId,
   showProfilePage,
+  handleLogout,
 }) {
   return (
     <aside className="w-64 font-outfit h-screen bg-[#202020] border-r border-[#2a2a2a] flex flex-col">
@@ -308,10 +309,7 @@ export default function Sidebar({
           {/* Log Out */}
           <button
             title="Sign out"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.href = "/signin";
-            }}
+            onClick={handleLogout}
             className="text-gray-300 hover:text-[#a3a3a3] p-1 cursor-pointer rounded-md transition-colors">
             <LucideLogOut className="w-5 h-5" />
           </button>
