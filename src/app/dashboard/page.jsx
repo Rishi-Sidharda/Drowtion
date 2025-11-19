@@ -266,10 +266,6 @@ export default function DashboardPage() {
     }
 
     saveToStorage(newData);
-    // Note: The board data (elements, appState, files) is currently *not* saved to local storage
-    // by this function. It should be handled by an external function (like the board page itself)
-    // using the BOARD_DATA_KEY, or we would need to integrate that logic here.
-    // For now, we trust the rest of the application to handle the content data.
   };
 
   const openBoard = (id) => router.push(`/board?id=${encodeURIComponent(id)}`);
@@ -686,6 +682,7 @@ export default function DashboardPage() {
                   startRenaming={startRenaming}
                   timeAgo={timeAgo}
                   ICONS={ICONS}
+                  loadingUser={loadingUser}
                 />
 
                 <SelectFolderViewSection
@@ -700,6 +697,7 @@ export default function DashboardPage() {
                   startRenaming={startRenaming}
                   handleBoardMenuClick={handleBoardMenuClick}
                   openBoard={openBoard}
+                  loadingUser={loadingUser}
                 />
               </>
             )}

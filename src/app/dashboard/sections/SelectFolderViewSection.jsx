@@ -1,13 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import {
-  Folder,
-  Star,
-  Ban,
-  Brush,
-  Ellipsis,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+import { Folder, Star, Ban, Brush, Ellipsis } from "lucide-react";
 
 export default function SelectFolderViewSection({
   data,
@@ -16,11 +8,11 @@ export default function SelectFolderViewSection({
   dropdownOpen,
   setDropdownOpen,
   ICONS,
-  timeAgo,
   startEditingIcon,
   startRenaming,
   handleBoardMenuClick,
   openBoard,
+  loadingUser,
 }) {
   const dropdownRef = useRef(null);
 
@@ -147,163 +139,245 @@ export default function SelectFolderViewSection({
       <div className="flex w-full">
         {/* Left half: boards list */}
         <div className="w-1/2 pr-4 flex flex-col mt-4 gap-2 ">
-          {selectedFolderId === "all" &&
-            Object.values(data.boards || {}).map((board) => {
-              const Icon = ICONS[board.icon] || Brush;
-              const folder = board.folderId
-                ? data.folders[board.folderId]
-                : null;
+          {/* --- NEW LOADING CONDITION --- */}
+          {loadingUser ? (
+            // Render 7 full-width, animated placeholder boards when loading
+            Array.from({ length: 7 }).map((_, index) => (
+              <div
+                key={index}
+                // Match the actual card appearance (w-full, bg-[#202020], rounded-md, flex items-center, shadow-sm, px-1 py-1)
+                className="w-full bg-[#202020] rounded-md flex items-center justify-between shadow-sm px-1 py-1 h-10 animate-pulse">
+                {/* Left colored bar placeholder */}
+                <div className="h-6 w-2 ml-1 rounded-sm mr-2 bg-[#2a2a2a]"></div>
 
-              return (
-                <div
-                  key={board.id}
-                  className="board-card-container w-full bg-[#202020] hover:bg-[#2a2a2a] rounded-md flex items-center justify-between shadow-sm hover:shadow-md transition cursor-pointer px-1 py-1"
-                  onClick={() => openBoard(board.id)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    handleBoardMenuClick(e, board.id);
-                  }}>
-                  {/* Left colored bar */}
-                  <div
-                    className="h-6 w-2 ml-1 rounded-sm mr-2"
-                    style={{ backgroundColor: folder?.color || "#6b7280" }}
-                  />
+                {/* Icon placeholder */}
+                <div className="p-1.5 rounded-lg bg-[#2a2a2a] w-7 h-7"></div>
 
-                  {/* Icon */}
-                  <div
-                    className="p-1.5 rounded-lg hover:bg-[#3a3a3a] transition"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startEditingIcon(board.id);
-                    }}>
-                    <Icon className="w-4 h-4 text-white" />
-                  </div>
+                {/* Name placeholder (takes up remaining space) */}
+                <div className="h-4 bg-[#2a2a2a] rounded ml-2 mr-2 flex-1"></div>
 
-                  {/* Name */}
-                  <h3
-                    className="text-white text-sm truncate ml-1 mr-2 flex-1"
-                    onDoubleClick={() => startRenaming(board.id, board.name)}>
-                    {board.name}
-                  </h3>
+                {/* Menu button placeholder */}
+                <div className="p-1.5 rounded-lg bg-[#2a2a2a] w-7 h-7"></div>
+              </div>
+            ))
+          ) : (
+            <>
+              {/* --- Folder: "all" --- */}
+              {selectedFolderId === "all" &&
+                (() => {
+                  const allBoards = Object.values(data.boards || {});
 
-                  {/* Menu button */}
-                  <span
-                    className="text-white p-1.5 rounded-lg hover:bg-[#3a3a3a]"
-                    onClick={(e) => handleBoardMenuClick(e, board.id)}>
-                    <Ellipsis className="w-4 h-4" />
-                  </span>
-                </div>
-              );
-            })}
+                  if (allBoards.length === 0) {
+                    return (
+                      <div className="flex flex-col items-center justify-center text-gray-500 h-36 rounded-md w-full bg-[#1a1a1a]">
+                        <p className="text-sm font-light">
+                          No boards yet. Create your first one!
+                        </p>
+                      </div>
+                    );
+                  }
 
-          {/* None */}
-          {selectedFolderId === "none" &&
-            Object.values(data.boards || {})
-              .filter((board) => !board.folderId)
-              .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-              .map((board) => {
-                const Icon = ICONS[board.icon] || Brush;
+                  return allBoards.map((board) => {
+                    const Icon = ICONS[board.icon] || Brush;
+                    const folder = board.folderId
+                      ? data.folders[board.folderId]
+                      : null;
 
-                return (
-                  <div
-                    key={board.id}
-                    className="board-card-container w-full bg-[#202020] hover:bg-[#2a2a2a] rounded-md flex items-center justify-between shadow-sm hover:shadow-md transition cursor-pointer px-1 py-1"
-                    onClick={() => openBoard(board.id)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      handleBoardMenuClick(e, board.id);
-                    }}>
-                    {/* Left colored bar */}
-                    <div
-                      className="h-6 w-2 ml-1 rounded-sm mr-2"
-                      style={{ backgroundColor: "#6b7280" }}
-                    />
+                    return (
+                      <div
+                        key={board.id}
+                        className="board-card-container w-full bg-[#202020] hover:bg-[#2a2a2a] rounded-md flex items-center justify-between shadow-sm hover:shadow-md transition cursor-pointer px-1 py-1"
+                        onClick={() => openBoard(board.id)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleBoardMenuClick(e, board.id);
+                        }}>
+                        {/* Left colored bar */}
+                        <div
+                          className="h-6 w-2 ml-1 rounded-sm mr-2"
+                          style={{
+                            backgroundColor: folder?.color || "#6b7280",
+                          }}
+                        />
 
-                    {/* Icon */}
-                    <div
-                      className="p-1.5 rounded-lg hover:bg-[#3a3a3a] transition"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startEditingIcon(board.id);
-                      }}>
-                      <Icon className="w-4 h-4 text-white" />
-                    </div>
+                        {/* Icon */}
+                        <div
+                          className="p-1.5 rounded-lg hover:bg-[#3a3a3a] transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditingIcon(board.id);
+                          }}>
+                          <Icon className="w-4 h-4 text-white" />
+                        </div>
 
-                    {/* Name */}
-                    <h3
-                      className="text-white text-sm truncate ml-1 mr-2 flex-1"
-                      onDoubleClick={() => startRenaming(board.id, board.name)}>
-                      {board.name}
-                    </h3>
+                        {/* Name */}
+                        <h3
+                          className="text-white text-sm truncate ml-1 mr-2 flex-1"
+                          onDoubleClick={() =>
+                            startRenaming(board.id, board.name)
+                          }>
+                          {board.name}
+                        </h3>
 
-                    {/* Menu button */}
-                    <span
-                      className="text-white p-1.5 rounded-lg hover:bg-[#3a3a3a]"
-                      onClick={(e) => handleBoardMenuClick(e, board.id)}>
-                      <Ellipsis className="w-4 h-4" />
-                    </span>
-                  </div>
-                );
-              })}
+                        {/* Menu button */}
+                        <span
+                          className="text-white p-1.5 rounded-lg hover:bg-[#3a3a3a]"
+                          onClick={(e) => handleBoardMenuClick(e, board.id)}>
+                          <Ellipsis className="w-4 h-4" />
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
 
-          {/* Specific */}
-          {selectedFolderId !== "all" &&
-            selectedFolderId !== "favourites" &&
-            selectedFolderId !== "none" &&
-            (data.folders[selectedFolderId]?.boards || [])
-              .map((id) => data.boards[id])
-              .filter(Boolean)
-              .map((board) => {
-                const Icon = ICONS[board.icon] || Brush;
-                const folder = data.folders[selectedFolderId];
+              {/* --- Folder: "none" (Boards without folders) --- */}
+              {selectedFolderId === "none" &&
+                (() => {
+                  const unassignedBoards = Object.values(data.boards || {})
+                    .filter((board) => !board.folderId)
+                    .sort(
+                      (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+                    );
 
-                return (
-                  <div
-                    key={board.id}
-                    className="board-card-container w-full bg-[#202020] hover:bg-[#2a2a2a] rounded-md flex items-center justify-between shadow-sm hover:shadow-md transition cursor-pointer px-1 py-1"
-                    onClick={() => openBoard(board.id)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      handleBoardMenuClick(e, board.id);
-                    }}>
-                    {/* Left colored bar */}
-                    <div
-                      className="h-6 w-2 ml-1 rounded-sm mr-2"
-                      style={{ backgroundColor: folder?.color || "#6b7280" }}
-                    />
+                  if (unassignedBoards.length === 0) {
+                    return (
+                      <div className="flex flex-col items-center justify-center text-gray-500 h-36 rounded-md w-full bg-[#1a1a1a]">
+                        <p className="text-sm font-light">
+                          No unassigned boards here.
+                        </p>
+                      </div>
+                    );
+                  }
 
-                    {/* Icon */}
-                    <div
-                      className="p-1.5 rounded-lg hover:bg-[#3a3a3a] transition"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startEditingIcon(board.id);
-                      }}>
-                      <Icon className="w-4 h-4 text-white" />
-                    </div>
+                  return unassignedBoards.map((board) => {
+                    const Icon = ICONS[board.icon] || Brush;
 
-                    {/* Name */}
-                    <h3
-                      className="text-white text-sm truncate ml-1 mr-2 flex-1"
-                      onDoubleClick={() => startRenaming(board.id, board.name)}>
-                      {board.name}
-                    </h3>
+                    return (
+                      <div
+                        key={board.id}
+                        className="board-card-container w-full bg-[#202020] hover:bg-[#2a2a2a] rounded-md flex items-center justify-between shadow-sm hover:shadow-md transition cursor-pointer px-1 py-1"
+                        onClick={() => openBoard(board.id)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleBoardMenuClick(e, board.id);
+                        }}>
+                        {/* Left colored bar */}
+                        <div
+                          className="h-6 w-2 ml-1 rounded-sm mr-2"
+                          style={{ backgroundColor: "#6b7280" }}
+                        />
 
-                    {/* Menu button */}
-                    <span
-                      className="text-white p-1.5 rounded-lg hover:bg-[#3a3a3a]"
-                      onClick={(e) => handleBoardMenuClick(e, board.id)}>
-                      <Ellipsis className="w-4 h-4" />
-                    </span>
-                  </div>
-                );
-              })}
+                        {/* Icon */}
+                        <div
+                          className="p-1.5 rounded-lg hover:bg-[#3a3a3a] transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditingIcon(board.id);
+                          }}>
+                          <Icon className="w-4 h-4 text-white" />
+                        </div>
+
+                        {/* Name */}
+                        <h3
+                          className="text-white text-sm truncate ml-1 mr-2 flex-1"
+                          onDoubleClick={() =>
+                            startRenaming(board.id, board.name)
+                          }>
+                          {board.name}
+                        </h3>
+
+                        {/* Menu button */}
+                        <span
+                          className="text-white p-1.5 rounded-lg hover:bg-[#3a3a3a]"
+                          onClick={(e) => handleBoardMenuClick(e, board.id)}>
+                          <Ellipsis className="w-4 h-4" />
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
+
+              {/* --- Folder: "Specific Folder ID" --- */}
+              {selectedFolderId !== "all" &&
+                selectedFolderId !== "favourites" &&
+                selectedFolderId !== "none" &&
+                (() => {
+                  const folderBoards = (
+                    data.folders[selectedFolderId]?.boards || []
+                  )
+                    .map((id) => data.boards[id])
+                    .filter(Boolean);
+
+                  if (folderBoards.length === 0) {
+                    return (
+                      <div className="flex flex-col items-center justify-center text-gray-500 h-36 rounded-md w-full bg-[#1a1a1a]">
+                        <p className="text-sm font-light">
+                          No boards found in this folder.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return folderBoards.map((board) => {
+                    const Icon = ICONS[board.icon] || Brush;
+                    const folder = data.folders[selectedFolderId];
+
+                    return (
+                      <div
+                        key={board.id}
+                        className="board-card-container w-full bg-[#202020] hover:bg-[#2a2a2a] rounded-md flex items-center justify-between shadow-sm hover:shadow-md transition cursor-pointer px-1 py-1"
+                        onClick={() => openBoard(board.id)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          handleBoardMenuClick(e, board.id);
+                        }}>
+                        {/* Left colored bar */}
+                        <div
+                          className="h-6 w-2 ml-1 rounded-sm mr-2"
+                          style={{
+                            backgroundColor: folder?.color || "#6b7280",
+                          }}
+                        />
+
+                        {/* Icon */}
+                        <div
+                          className="p-1.5 rounded-lg hover:bg-[#3a3a3a] transition"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditingIcon(board.id);
+                          }}>
+                          <Icon className="w-4 h-4 text-white" />
+                        </div>
+
+                        {/* Name */}
+                        <h3
+                          className="text-white text-sm truncate ml-1 mr-2 flex-1"
+                          onDoubleClick={() =>
+                            startRenaming(board.id, board.name)
+                          }>
+                          {board.name}
+                        </h3>
+
+                        {/* Menu button */}
+                        <span
+                          className="text-white p-1.5 rounded-lg hover:bg-[#3a3a3a]"
+                          onClick={(e) => handleBoardMenuClick(e, board.id)}>
+                          <Ellipsis className="w-4 h-4" />
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
+
+              {/* NOTE: You should also add a check for selectedFolderId === "favourites" if that is a valid case */}
+            </>
+          )}
         </div>
-      </div>
 
-      {/* Right half: empty placeholder for your future customization */}
-      <div className="w-1/2 pl-4">
-        {/* Customize this area however you like */}
+        {/* Right half of the component (not shown in the original prompt, kept for structure) */}
+        <div className="w-1/2">
+          {/* ... other content for the right half ... */}
+        </div>
       </div>
     </section>
   );
