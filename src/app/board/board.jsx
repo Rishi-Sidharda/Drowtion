@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import "@excalidraw/excalidraw/index.css";
 import { setExcalidrawApi } from "./boardApi";
@@ -34,9 +34,9 @@ export default function Board() {
   const boardId = searchParams.get("id");
 
   const [api, setApi] = useState(null);
-  const [user, setUser] = useState(null); // ADDED: User state
-  const [STORAGE_KEY, setSTORAGE_KEY] = useState(null); // ADDED: Dynamic key state
-  const [BOARD_DATA_KEY, setBOARD_DATA_KEY] = useState(null); // ADDED: Dynamic key state
+  const [user, setUser] = useState(null);
+  const [STORAGE_KEY, setSTORAGE_KEY] = useState(null);
+  const [BOARD_DATA_KEY, setBOARD_DATA_KEY] = useState(null);
 
   const [showFloatingCard, setShowFloatingCard] = useState(false);
   const [showCommandPallet, setShowCommandPallet] = useState(false);
@@ -117,10 +117,6 @@ export default function Board() {
         id.startsWith("markdown-")
       );
 
-      // Load board data from localStorage (already done above, but kept structure similar)
-      // const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY); // Re-load not necessary
-      // const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
-
       // Get the markdown text from registry
       const markdownTextRaw =
         boardsData[boardId]?.markdown_registry?.[markdownGroupId]?.text || "";
@@ -163,10 +159,18 @@ export default function Board() {
     setShowMarkdownButton(false);
   };
 
-  const handleSave = () => {
+  // ✅ Wrapped handleSave in useCallback for use in useEffect and to prevent unnecessary re-creation
+  const handleSave = useCallback(() => {
     // 1. EARLY EXIT & STATE SETUP
-    if (!api || !boardId || !STORAGE_KEY || !BOARD_DATA_KEY) return;
-    setIsSaving(true);
+    // Check if the API is available before proceeding
+    if (!api || !boardId || !STORAGE_KEY || !BOARD_DATA_KEY) {
+      // console.log("Save skipped: API or Keys not ready.");
+      return;
+    }
+
+    // Set saving state only if this is NOT an autosave, or if you want UI feedback for autosave.
+    // For minimal interruption, we'll keep the existing button-click logic for isSaving state
+    // and let the button handle the visual feedback.
 
     // Get live data
     const elements = api.getSceneElements();
@@ -187,7 +191,6 @@ export default function Board() {
     };
 
     // 3. SYNCHRONOUS DATA LOAD (Unchanged Load Behavior)
-    // Note: This remains the synchronous bottleneck for large data.
     const tenshin = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
       boards: {},
       folders: {},
@@ -247,7 +250,6 @@ export default function Board() {
 
     // Markdown hash only updates if registry size changes
     if (oldHashes.markdown !== newHashes.markdown) {
-      // NOTE: This logic still copies the old registry, but we mark a change.
       updatedBoard.markdown_registry = { ...oldRegistry };
       updatedBoard.markdown_hash = newHashes.markdown;
       somethingChanged = true;
@@ -273,15 +275,29 @@ export default function Board() {
     }
 
     // Use dynamic keys to save data - This is the remaining synchronous I/O bottleneck
-    localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tenshin));
+    if (somethingChanged) {
+      // Only write to localStorage if something actually changed.
+      localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tenshin));
+      // console.log("Autosave: Data written to localStorage.");
+    } else {
+      // console.log("Autosave: No changes detected, write skipped.");
+    }
+  }, [api, boardId, STORAGE_KEY, BOARD_DATA_KEY, user]);
+  // Note: user is included in the dependency array to ensure tenshin.userId is set correctly
 
-    // Remove artificial delay
-    setIsSaving(false);
+  // Helper for the manual save button click
+  const handleManualSave = () => {
+    setIsSaving(true);
+    handleSave();
+    // Simulate a brief "Saved!" visual confirmation before reverting
+    setTimeout(() => {
+      setIsSaving(false);
+    }, 1000);
   };
 
   // ----------------------------------------------------------------------
-  // 3. Effects (Updated load logic)
+  // 3. Effects (Updated load logic + AUTOSAVE)
   // ----------------------------------------------------------------------
 
   // ✅ Register the Excalidraw API
@@ -303,6 +319,26 @@ export default function Board() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [api]);
+
+  // 🌟 NEW: Autosave functionality using setInterval
+  useEffect(() => {
+    // Only set up autosave if the API and keys are ready
+    if (!api || !STORAGE_KEY || !BOARD_DATA_KEY) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      // The handleSave function is called every 5 seconds (5000 ms)
+      handleSave();
+    }, 5000); // 5 seconds
+
+    // Clean up the interval when the component unmounts or dependencies change
+    return () => {
+      clearInterval(intervalId);
+    };
+    // handleSave is a dependency because it's wrapped in useCallback and needs
+    // to pick up the latest dependencies (like api, keys, user) it closes over.
+  }, [api, STORAGE_KEY, BOARD_DATA_KEY, handleSave]);
 
   // ✅ Load board data from localStorage after API and KEYS ready
   useEffect(() => {
@@ -429,9 +465,9 @@ export default function Board() {
           }}
         />
 
-        {/* Save Button */}
+        {/* Save Button - Now calls handleManualSave */}
         <button
-          onClick={handleSave}
+          onClick={handleManualSave}
           style={{
             position: "absolute",
             bottom: "20px",
