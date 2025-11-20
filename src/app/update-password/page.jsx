@@ -110,7 +110,7 @@ export default function UpdatePasswordPage() {
               {/* Success Message Banner */}
               {successMsg && (
                 <div className="mb-6 flex items-start space-x-3 rounded-md bg-[#22c55e]/10 p-4 border border-[#22c55e]">
-                  <CheckCircle className="size-5 flex-shrink-0 text-[#22c55e] mt-0.5" />
+                  <CheckCircle className="size-5 shrink-0 text-[#22c55e] mt-0.5" />
                   <p className="text-sm font-medium text-white">
                     {successMsg} Redirecting to sign in...
                   </p>
