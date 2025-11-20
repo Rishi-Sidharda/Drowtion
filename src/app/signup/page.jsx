@@ -1,18 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient"; // 👈 you'll create this file
+import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Geist_Mono } from "next/font/google";
+import { Eye, EyeOff, Send, CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import {
-  signInWithGitHub,
-  signInWithGoogle,
-  ensureUserProfile,
-} from "@/lib/authActions";
+import { signInWithGitHub, signInWithGoogle } from "@/lib/authActions";
 import Footer from "@/components/ui/footer";
 
 const geistMono = Geist_Mono({
@@ -20,6 +18,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Icon definitions remain the same
 const GitHubIcon = (props) => (
   <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
     <path d="M12.001 2C6.47598 2 2.00098 6.475 2.00098 12C2.00098 16.425 4.86348 20.1625 8.83848 21.4875C9.33848 21.575 9.52598 21.275 9.52598 21.0125C9.52598 20.775 9.51348 19.9875 9.51348 19.15C7.00098 19.6125 6.35098 18.5375 6.15098 17.975C6.03848 17.6875 5.55098 16.8 5.12598 16.5625C4.77598 16.375 4.27598 15.9125 5.11348 15.9C5.90098 15.8875 6.46348 16.625 6.65098 16.925C7.55098 18.4375 8.98848 18.0125 9.56348 17.75C9.65098 17.1 9.91348 16.6625 10.201 16.4125C7.97598 16.1625 5.65098 15.3 5.65098 11.475C5.65098 10.3875 6.03848 9.4875 6.67598 8.7875C6.57598 8.5375 6.22598 7.5125 6.77598 6.1375C6.77598 6.1375 7.61348 5.875 9.52598 7.1625C10.326 6.9375 11.176 6.825 12.026 6.825C12.876 6.825 13.726 6.9375 14.526 7.1625C16.4385 5.8625 17.276 6.1375 17.276 6.1375C17.826 7.5125 17.476 8.5375 17.376 8.7875C18.0135 9.4875 18.401 10.375 18.401 11.475C18.401 15.3125 16.0635 16.1625 13.8385 16.4125C14.201 16.725 14.5135 17.325 14.5135 18.2625C14.5135 19.6 14.501 20.675 14.501 21.0125C14.501 21.275 14.6885 21.5875 15.1885 21.4875C19.259 20.1133 21.9999 16.2963 22.001 12C22.001 6.475 17.526 2 12.001 2Z" />
@@ -35,11 +34,21 @@ const GoogleIcon = (props) => (
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [signupSuccessEmail, setSignupSuccessEmail] = useState(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  // showSuccessBanner now controls the entire post-signup block visibility
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+
+  const router = useRouter();
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setResendMessage("");
     setLoading(true);
+    setShowSuccessBanner(false);
 
     const email = e.target["email-login-04"].value;
     const password = e.target["password-login-04"].value;
@@ -53,25 +62,108 @@ export default function SignupPage() {
 
     if (error) {
       setErrorMsg(error.message);
+      setSignupSuccessEmail(null);
     } else if (data?.user) {
-      alert("✅ Check your email to confirm your account!");
+      setSignupSuccessEmail(email);
+      // Show the combined success/resend section
+      setShowSuccessBanner(true);
+
+      // Clear form fields after successful submission
+      e.target.reset();
     }
+  };
+
+  const handleResendLink = async () => {
+    if (!signupSuccessEmail) return;
+
+    setResendLoading(true);
+    setResendMessage("");
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email: signupSuccessEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        shouldCreateUser: false,
+      },
+    });
+
+    setResendLoading(false);
+
+    if (error) {
+      setResendMessage(`Error: ${error.message}`);
+    } else {
+      setResendMessage(
+        `✅ Verification email successfully resent! Check your inbox.`
+      );
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
     <main>
       <section>
-        <div className="flex items-center bg-[#121212]  justify-center min-h-screen">
+        <div className="flex items-center bg-[#121212] justify-center min-h-screen">
           <div
-            className={`flex flex-1 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-mono`}
-          >
-            <div className="w-full max-w-xl bg-[#1a1a1a]  rounded-2xl shadow-black shadow-2xl p-10">
+            className={`flex flex-1 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-mono`}>
+            <div className="w-full max-w-xl bg-[#1a1a1a] rounded-2xl shadow-black shadow-2xl p-10">
+              {/* === Combined Post-Signup Section === */}
+              {showSuccessBanner && (
+                <div className="mb-6 rounded-md  p-4 border-[#22c55e]">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="size-5 hrink-0 text-[#22c55e] mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-base font-semibold text-white">
+                        Confirmation Sent!
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        Check the link sent to *{signupSuccessEmail}* to verify
+                        your account and proceed to sign in.
+                      </p>
+                    </div>
+                  </div>
+
+                  <Separator className="my-4 bg-white/30" />
+
+                  {/* Resend Link Question */}
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Didn't receive the email?
+                    </p>
+                    <Button
+                      type="button"
+                      onClick={handleResendLink}
+                      className="w-full py-2 font-medium bg-[#2a2a2a] hover:bg-[#3a3a3as]/70 cursor-pointer space-x-2"
+                      disabled={resendLoading}>
+                      <Send className="size-4" />
+                      <span>
+                        {resendLoading
+                          ? "Sending..."
+                          : "Resend Verification Link"}
+                      </span>
+                    </Button>
+                    {resendMessage && (
+                      <p
+                        className={`text-sm ${
+                          resendMessage.startsWith("Error")
+                            ? "text-red-400"
+                            : "text-green-500"
+                        }`}>
+                        {resendMessage}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* ==================================== */}
+
               <div
                 onClick={() => {
-                  window.location.href = "/";
+                  router.push("/");
                 }}
-                className="flex cursor-pointer items-center space-x-1.5"
-              >
+                className="flex cursor-pointer items-center space-x-1.5">
                 <div className="w-8 h-8 bg-white rounded-full mr-2 flex items-center justify-center">
                   <img src="/logo_sm.svg" className="rounded-md" alt="" />
                 </div>
@@ -84,26 +176,23 @@ export default function SignupPage() {
                 Already have an account?{" "}
                 <a
                   href="/signin"
-                  className="font-medium text-[#ff8383] hover:text-[#ff8383]/50"
-                >
+                  className="font-medium text-[#ff8383] hover:text-[#ff8383]/50">
                   Sign in
                 </a>
               </p>
 
               <div className="mt-8 flex flex-col items-center space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">
                 <Button
-                  className="flex-1 cursor-pointer bg-[#2a2a2a] focus:bg-[#ff8383] hover:bg-[#ff8383] space-x-2 py-2"
-                  onClick={signInWithGitHub}
-                >
+                  className="w-full flex-1 cursor-pointer bg-[#2a2a2a] focus:bg-[#ff8383] hover:bg-[#ff8383] space-x-2 py-2"
+                  onClick={signInWithGitHub}>
                   <GitHubIcon className="size-5" aria-hidden={true} />
                   <span className="text-sm font-medium">
                     Signup with GitHub
                   </span>
                 </Button>
                 <Button
-                  className="flex-1 cursor-pointer bg-[#2a2a2a] focus:bg-[#ff8383] hover:bg-[#ff8383] space-x-2 py-2"
-                  onClick={signInWithGoogle}
-                >
+                  className="w-full flex-1 cursor-pointer bg-[#2a2a2a] focus:bg-[#ff8383] hover:bg-[#ff8383] space-x-2 py-2"
+                  onClick={signInWithGoogle}>
                   <GoogleIcon className="size-4" aria-hidden={true} />
                   <span className="text-sm font-medium">
                     Signup with Google
@@ -112,7 +201,7 @@ export default function SignupPage() {
               </div>
 
               <div className="relative my-6">
-                <div className="absolute inset-0  flex items-center">
+                <div className="absolute inset-0 flex items-center">
                   <Separator className="w-full" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
@@ -126,8 +215,7 @@ export default function SignupPage() {
                 <div>
                   <Label
                     className="text-sm text-white font-medium"
-                    htmlFor="email-login-04"
-                  >
+                    htmlFor="email-login-04">
                     Email
                   </Label>
                   <Input
@@ -137,25 +225,42 @@ export default function SignupPage() {
                     autoComplete="email"
                     placeholder="ok@tenshin.app"
                     required
+                    disabled={loading || showSuccessBanner}
                     className="mt-2 text-white border-[#2a2a2a] border-2 rounded-md"
                   />
                 </div>
                 <div>
                   <Label
                     className="text-sm text-white font-medium"
-                    htmlFor="password-login-04"
-                  >
+                    htmlFor="password-login-04">
                     Password
                   </Label>
-                  <Input
-                    type="password"
-                    id="password-login-04"
-                    name="password-login-04"
-                    autoComplete="password"
-                    placeholder="not1234"
-                    required
-                    className="mt-2 text-white border-[#2a2a2a] border-2 rounded-md"
-                  />
+                  <div className="relative mt-2">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      id="password-login-04"
+                      name="password-login-04"
+                      autoComplete="new-password"
+                      placeholder="not1234"
+                      required
+                      disabled={loading || showSuccessBanner}
+                      className="text-white border-[#2a2a2a] border-2 rounded-md pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      disabled={loading || showSuccessBanner}
+                      className="absolute inset-y-0 right-0 cursor-pointer flex items-center pr-3 text-white focus:outline-none"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }>
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5 text-white" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-white" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
@@ -163,16 +268,15 @@ export default function SignupPage() {
                 <Button
                   type="submit"
                   className="mt-4 w-full py-2 font-medium bg-[#2a2a2a] hover:bg-[#ff8383] focus:bg-[#ff8383] cursor-pointer"
-                  disabled={loading}
-                >
+                  disabled={loading || showSuccessBanner}>
                   {loading ? "Creating..." : "Create Account"}
                 </Button>
-                <h1 className="text-[#5a5a5a] font-mono text-sm">
+
+                <h1 className="text-[#5a5a5a] font-mono text-sm pt-4">
                   *By signing up, you agree to our{" "}
                   <a
                     href="/legal"
-                    className="text-[#ff8383] hover:text-[#ff5a5a] underline"
-                  >
+                    className="text-[#ff8383] hover:text-[#ff5a5a] underline">
                     Terms of Service
                   </a>
                   .*

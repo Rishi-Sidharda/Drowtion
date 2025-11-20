@@ -8,13 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Geist_Mono } from "next/font/google";
-import FloatingImage from "../../components/ui/floatingImage";
+
 import Footer from "@/components/ui/footer";
-import {
-  signInWithGitHub,
-  signInWithGoogle,
-  ensureUserProfile,
-} from "@/lib/authActions";
+import { signInWithGitHub, signInWithGoogle } from "@/lib/authActions"; // Removed ensureUserProfile
+import { Eye, EyeOff } from "lucide-react";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -36,6 +33,7 @@ const GoogleIcon = (props) => (
 export default function Signin() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleSignin = async (e) => {
@@ -60,20 +58,22 @@ export default function Signin() {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <main>
       <section>
         <div className="flex items-center bg-[#121212] justify-center min-h-screen">
           <div
-            className={`flex flex-1 z-20 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-mono`}
-          >
-            <div className="w-full max-w-xl bg-[#1a1a1a]  rounded-2xl shadow-black shadow-2xl p-10">
+            className={`flex flex-1 z-20 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-mono`}>
+            <div className="w-full max-w-xl bg-[#1a1a1a] rounded-2xl shadow-black shadow-2xl p-10">
               <div
                 onClick={() => {
-                  window.location.href = "/";
+                  router.push("/"); // 3. Used router.push for smooth navigation
                 }}
-                className="flex cursor-pointer items-center space-x-1.5"
-              >
+                className="flex cursor-pointer items-center space-x-1.5">
                 <div className="w-8 h-8 bg-white rounded-full mr-2 flex items-center justify-center">
                   <img src="/logo_sm.svg" className="rounded-md" alt="" />
                 </div>
@@ -86,39 +86,30 @@ export default function Signin() {
                 Don&apos;t have an account?{" "}
                 <a
                   href="/signup"
-                  className="font-medium text-[#ff8383]  hover:text-[#ff8484]/50"
-                >
+                  className="font-medium text-[#ff8383]  hover:text-[#ff8484]/50">
                   Sign up
                 </a>
               </p>
 
               <div className="mt-8 flex flex-col items-center space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0">
+                {/* 5. Cleaned up GitHub button */}
                 <Button
-                  className="flex-1 bg-[#2a2a2a] focus:bg-[#ff8383] hover:bg-[#ff8383] space-x-2 py-2"
-                  asChild
-                >
-                  <a href="#" onClick={signInWithGitHub}>
-                    <GitHubIcon className="size-5" />
-                    <span className="text-sm font-medium">
-                      Login with GitHub
-                    </span>
-                  </a>
+                  className="w-full flex-1 bg-[#2a2a2a] focus:bg-[#ff8383] hover:bg-[#ff8383] space-x-2 py-2"
+                  onClick={signInWithGitHub}>
+                  <GitHubIcon className="size-5" />
+                  <span className="text-sm font-medium">Login with GitHub</span>
                 </Button>
+                {/* 5. Cleaned up Google button */}
                 <Button
-                  className="flex-1 bg-[#2a2a2a] focus:bg-[#ff8383] hover:bg-[#ff8383] space-x-2 py-2"
-                  asChild
-                >
-                  <a href="#" onClick={signInWithGoogle}>
-                    <GoogleIcon className="size-4" />
-                    <span className="text-sm font-medium">
-                      Login with Google
-                    </span>
-                  </a>
+                  className="w-full flex-1 bg-[#2a2a2a] focus:bg-[#ff8383] hover:bg-[#ff8383] space-x-2 py-2"
+                  onClick={signInWithGoogle}>
+                  <GoogleIcon className="size-4" />
+                  <span className="text-sm font-medium">Login with Google</span>
                 </Button>
               </div>
 
               <div className="relative my-6">
-                <div className="absolute inset-0  flex items-center">
+                <div className="absolute inset-0 flex items-center">
                   <Separator className="w-full" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
@@ -132,8 +123,7 @@ export default function Signin() {
                 <div>
                   <Label
                     htmlFor="email-login-04"
-                    className="text-sm text-white font-medium"
-                  >
+                    className="text-sm text-white font-medium">
                     Email
                   </Label>
                   <Input
@@ -142,33 +132,53 @@ export default function Signin() {
                     name="email-login-04"
                     required
                     placeholder="ok@tenshin.app"
+                    // 1. Disable input during loading
+                    disabled={loading}
                     className="mt-2 text-white border-[#2a2a2a] border-2 rounded-md"
                   />
                 </div>
                 <div>
                   <Label
                     htmlFor="password-login-04"
-                    className="text-sm text-white font-medium"
-                  >
+                    className="text-sm text-white font-medium">
                     Password
                   </Label>
-                  <Input
-                    type="password"
-                    id="password-login-04"
-                    name="password-login-04"
-                    required
-                    placeholder="not1234"
-                    className="mt-2 text-white border-[#2a2a2a] border-2 rounded-md"
-                  />
+                  <div className="relative mt-2">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      id="password-login-04"
+                      name="password-login-04"
+                      required
+                      placeholder="not1234"
+                      // 1. Disable input during loading
+                      disabled={loading}
+                      className="text-white border-[#2a2a2a] border-2 rounded-md pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      disabled={loading} // Disable toggle while loading
+                      className="absolute inset-y-0 right-0 cursor-pointer flex items-center pr-3 text-white focus:outline-none"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }>
+                      {showPassword ? (
+                        // Used accent color for visibility
+                        <EyeOff className="h-5 w-5 text-white" />
+                      ) : (
+                        // Used accent color for visibility
+                        <Eye className="h-5 w-5 text-white" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
+                {errorMsg && <p className="text-sm text-red-400">{errorMsg}</p>}
 
                 <Button
                   type="submit"
                   className="mt-4 w-full py-2 font-medium bg-[#2a2a2a] hover:bg-[#ff8383] focus:bg-[#ff8383] cursor-pointer"
-                  disabled={loading}
-                >
+                  disabled={loading}>
                   {loading ? "Signing in..." : "Sign in"}
                 </Button>
               </form>
@@ -176,9 +186,8 @@ export default function Signin() {
               <p className="mt-6 text-sm text-muted-foreground">
                 Forgot your password?{" "}
                 <a
-                  href="#"
-                  className="font-medium text-[#ff8383] hover:text-[#ff8383]/50"
-                >
+                  href="/reset-password"
+                  className="font-medium text-[#ff8383] hover:text-[#ff8383]/50">
                   Reset password
                 </a>
               </p>
