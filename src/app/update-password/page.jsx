@@ -67,7 +67,7 @@ export default function UpdatePasswordPage() {
       // Redirect the user to sign-in after a short delay
       setTimeout(() => {
         router.push("/signin");
-      }, 5000);
+      }, 4000);
     }
   };
 
@@ -143,9 +143,9 @@ export default function UpdatePasswordPage() {
                         disabled={loading}
                         className="absolute inset-y-0 right-0 cursor-pointer flex items-center pr-3 text-white focus:outline-none">
                         {showPassword ? (
-                          <EyeOff className="h-5 w-5 text-[#ff8383]" />
+                          <EyeOff className="h-5 w-5 text-white" />
                         ) : (
-                          <Eye className="h-5 w-5 text-[#ff8383]" />
+                          <Eye className="h-5 w-5 text-white" />
                         )}
                       </button>
                     </div>
