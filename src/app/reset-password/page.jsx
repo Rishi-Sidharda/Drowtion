@@ -35,7 +35,7 @@ export default function ResetPasswordRequestPage() {
     const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
       // The user will be redirected to this URL after clicking the link in the email.
       // This MUST be the URL where your password update page is located.
-      redirectTo: `${window.location.origin}/update-password`,
+      redirectTo: `https://tenshin.app/update-password`,
     });
 
     setLoading(false);
