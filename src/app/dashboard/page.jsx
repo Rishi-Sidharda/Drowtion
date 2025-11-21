@@ -222,6 +222,40 @@ export default function DashboardPage() {
     }
   }
 
+  const deleteBoard = (id) => {
+    const newData = {
+      folders: { ...(data.folders || {}) },
+      boards: { ...(data.boards || {}) },
+      ui: { ...(data.ui || { collapsedFolders: {} }) },
+    };
+    const board = newData.boards[id];
+    if (!board) return;
+
+    // Remove board ID from any folder list
+    Object.keys(newData.folders).forEach((fid) => {
+      const f = { ...newData.folders[fid] };
+      if (Array.isArray(f.boards) && f.boards.includes(id)) {
+        f.boards = f.boards.filter((b) => b !== id);
+        newData.folders[fid] = f;
+      }
+    });
+
+    delete newData.boards[id];
+    if (BOARD_DATA_KEY) {
+      try {
+        const boardsDataRaw = localStorage.getItem(BOARD_DATA_KEY);
+        const boardsData = boardsDataRaw ? JSON.parse(boardsDataRaw) : {};
+        delete boardsData[id];
+        localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
+      } catch (e) {
+        console.error("Failed to delete board data from storage", e);
+      }
+    }
+
+    saveToStorage(newData);
+    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
+  };
+
   // ----------------------- DERIVED LISTS -----------------------
   const allBoardsArray = Object.keys(data.boards || {}).map((id) => ({
     id,
@@ -274,41 +308,6 @@ export default function DashboardPage() {
   const openBoard = (id) => {
     setBoardLoading(true);
     router.push(`/board?id=${encodeURIComponent(id)}`);
-  };
-
-  const deleteBoard = (id) => {
-    const newData = {
-      folders: { ...(data.folders || {}) },
-      boards: { ...(data.boards || {}) },
-      ui: { ...(data.ui || { collapsedFolders: {} }) },
-    };
-    const board = newData.boards[id];
-    if (!board) return;
-
-    // Remove board ID from any folder list
-    Object.keys(newData.folders).forEach((fid) => {
-      const f = { ...newData.folders[fid] };
-      if (Array.isArray(f.boards) && f.boards.includes(id)) {
-        f.boards = f.boards.filter((b) => b !== id);
-        newData.folders[fid] = f;
-      }
-    });
-
-    delete newData.boards[id];
-    // We would need to delete the board content from localStorage as well
-    if (BOARD_DATA_KEY) {
-      try {
-        const boardsDataRaw = localStorage.getItem(BOARD_DATA_KEY);
-        const boardsData = boardsDataRaw ? JSON.parse(boardsDataRaw) : {};
-        delete boardsData[id];
-        localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
-      } catch (e) {
-        console.error("Failed to delete board data from storage", e);
-      }
-    }
-
-    saveToStorage(newData);
-    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
   };
 
   const startRenaming = (id, currentName) => {

@@ -80,6 +80,40 @@ export default function Board() {
   // 2. Data Handlers (Updated to use dynamic keys)
   // ----------------------------------------------------------------------
 
+  useEffect(() => {
+    // Only proceed if API, boardId, and both keys are ready, and we haven't loaded yet
+    if (!api || !boardId || isLoaded || !STORAGE_KEY || !BOARD_DATA_KEY) return;
+
+    // Use dynamic keys
+    const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
+
+    const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
+
+    const boardContent = boardsData[boardId];
+
+    if (boardContent) {
+      // Fix appState: collaborators must be a Map, not a plain object/array
+      const fixedAppState = {
+        ...boardContent.appState,
+        collaborators: new Map(),
+      };
+
+      // Delay to ensure Excalidraw is initialized
+      setTimeout(() => {
+        api.updateScene({
+          elements: boardContent.elements || [],
+          appState: fixedAppState,
+          files: boardContent.files || {},
+        });
+        // Scroll to content or center view
+        api.scrollToContent(boardContent.elements || []);
+        setIsLoaded(true);
+      }, 300);
+    } else {
+      setIsLoaded(true);
+    }
+  }, [api, boardId, isLoaded, STORAGE_KEY, BOARD_DATA_KEY]); // DEPENDS ON NEW KEYS
+
   const handleChange = (elements, state) => {
     // Return early if keys aren't ready
     if (!BOARD_DATA_KEY) return;
@@ -96,7 +130,6 @@ export default function Board() {
     // Get selected elements
     const selectedElements = elements.filter((el) => selectedElementIds[el.id]);
 
-    // Load board data from localStorage using dynamic key
     const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
     const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
     const markdownRegistry = boardsData[boardId]?.markdown_registry || {};
@@ -167,10 +200,6 @@ export default function Board() {
       // console.log("Save skipped: API or Keys not ready.");
       return;
     }
-
-    // Set saving state only if this is NOT an autosave, or if you want UI feedback for autosave.
-    // For minimal interruption, we'll keep the existing button-click logic for isSaving state
-    // and let the button handle the visual feedback.
 
     // Get live data
     const elements = api.getSceneElements();
@@ -276,10 +305,8 @@ export default function Board() {
 
     // Use dynamic keys to save data - This is the remaining synchronous I/O bottleneck
     if (somethingChanged) {
-      // Only write to localStorage if something actually changed.
       localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tenshin));
-      // console.log("Autosave: Data written to localStorage.");
     } else {
       // console.log("Autosave: No changes detected, write skipped.");
     }
@@ -339,41 +366,6 @@ export default function Board() {
     // handleSave is a dependency because it's wrapped in useCallback and needs
     // to pick up the latest dependencies (like api, keys, user) it closes over.
   }, [api, STORAGE_KEY, BOARD_DATA_KEY, handleSave]);
-
-  // ✅ Load board data from localStorage after API and KEYS ready
-  useEffect(() => {
-    // Only proceed if API, boardId, and both keys are ready, and we haven't loaded yet
-    if (!api || !boardId || isLoaded || !STORAGE_KEY || !BOARD_DATA_KEY) return;
-
-    // Use dynamic keys
-    const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
-
-    const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
-
-    const boardContent = boardsData[boardId];
-
-    if (boardContent) {
-      // Fix appState: collaborators must be a Map, not a plain object/array
-      const fixedAppState = {
-        ...boardContent.appState,
-        collaborators: new Map(),
-      };
-
-      // Delay to ensure Excalidraw is initialized
-      setTimeout(() => {
-        api.updateScene({
-          elements: boardContent.elements || [],
-          appState: fixedAppState,
-          files: boardContent.files || {},
-        });
-        // Scroll to content or center view
-        api.scrollToContent(boardContent.elements || []);
-        setIsLoaded(true);
-      }, 300);
-    } else {
-      setIsLoaded(true);
-    }
-  }, [api, boardId, isLoaded, STORAGE_KEY, BOARD_DATA_KEY]); // DEPENDS ON NEW KEYS
 
   const handleEditMarkdown = () => {
     setIsEditingMarkdown(true);
