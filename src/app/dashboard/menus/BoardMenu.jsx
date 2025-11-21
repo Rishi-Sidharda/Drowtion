@@ -34,29 +34,25 @@ export default function BoardMenu({
     <div
       className="board-menu font-outfit absolute z-50 w-56 bg-[#2a2a2a] rounded-md shadow-xl p-1"
       style={{ left, top }}
-      onClick={(e) => e.stopPropagation()}
-    >
+      onClick={(e) => e.stopPropagation()}>
       {/* Open */}
       <button
         onClick={() => openBoard(boardMenuState.boardId)}
-        className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md"
-      >
+        className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md">
         <ExternalLink className="w-4 h-4 mr-2" /> Open
       </button>
 
       {/* Rename */}
       <button
         onClick={() => startRenaming(boardMenuState.boardId, board.name)}
-        className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md"
-      >
+        className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md">
         <Edit className="w-4 h-4 mr-2" /> Rename
       </button>
 
       {/* Change Icon */}
       <button
         onClick={() => startEditingIcon(boardMenuState.boardId)}
-        className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md"
-      >
+        className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md">
         <Edit className="w-4 h-4 mr-2" /> Change Icon
       </button>
 
@@ -77,12 +73,10 @@ export default function BoardMenu({
               left + menuWidth + submenuWidth > window.innerWidth
                 ? `-${submenuWidth}px`
                 : "100%",
-          }}
-        >
+          }}>
           <button
             onClick={() => moveBoardToFolder(boardMenuState.boardId, null)}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-[#3b3b3b] rounded-md"
-          >
+            className="w-full text-left px-3 py-2 text-sm hover:bg-[#3b3b3b] rounded-md">
             No Folder
           </button>
 
@@ -90,12 +84,10 @@ export default function BoardMenu({
             <button
               key={f.id}
               onClick={() => moveBoardToFolder(boardMenuState.boardId, f.id)}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-[#3b3b3b] rounded-md flex items-center"
-            >
+              className="w-full text-left px-3 py-2 text-sm hover:bg-[#3b3b3b] rounded-md flex items-center">
               <span
                 className="inline-block w-3 h-3 mr-2 rounded-sm"
-                style={{ background: f.color }}
-              ></span>
+                style={{ background: f.color }}></span>
               {f.name}
             </button>
           ))}
@@ -107,8 +99,7 @@ export default function BoardMenu({
       {/* Favorite */}
       <button
         onClick={() => toggleFavorite(boardMenuState.boardId)}
-        className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md"
-      >
+        className="flex items-center w-full px-3 py-2 text-sm text-gray-300 hover:bg-[#3b3b3b] rounded-md">
         <Star className="w-4 h-4 mr-2" />
         {data.boards[boardMenuState.boardId]?.isFavorite
           ? "Remove Favorite"
@@ -121,8 +112,7 @@ export default function BoardMenu({
           if (window.confirm(`Delete board: ${board.name}?`))
             deleteBoard(boardMenuState.boardId);
         }}
-        className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/40 rounded-md"
-      >
+        className="flex items-center w-full px-3 py-2 text-sm text-red-400 hover:bg-red-900/40 rounded-md">
         <Trash2 className="w-4 h-4 mr-2" /> Delete
       </button>
     </div>

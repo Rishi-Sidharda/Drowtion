@@ -1,18 +1,20 @@
 // generateMarkdown.js
 
+// 1. IMPORT the asynchronous storage function (assumes it's implemented
+// as "Fire-and-Forget" in lib/storage.js to avoid requiring 'await').
+import { saveMarkdownToRegistry } from "@/lib/storage";
+
 const STORAGE_KEY = "tenshin";
 const BOARD_DATA_KEY = "boardData";
 
 import { useSearchParams } from "next/navigation";
 
-// --- Configuration is now handled via function arguments, but we keep
-// the line spacing constant locally as it's a structural element.
 const LINE_SPACING = 10;
 
 const generateGroupId = () =>
   `markdown-${Math.random().toString(36).substr(2, 9)}`;
 
-// NOTE: wrapText now takes charFactor as an argument instead of using a global const.
+// NOTE: wrapText logic remains unchanged.
 function wrapText(text, fontSize, maxWidth, charFactor) {
   // Uses the passed-in charFactor for consistent line wrapping
   const approxCharWidth = fontSize * charFactor;
@@ -33,9 +35,8 @@ function wrapText(text, fontSize, maxWidth, charFactor) {
       maxLineLength = Math.max(maxLineLength, word.length);
       currentLine = "";
       return;
-    }
+    } // 2. Original wrapping logic
 
-    // 2. Original wrapping logic
     const nextLine = currentLine + (currentLine ? " " : "") + word;
 
     if (nextLine.length <= maxCharsPerLine) {
@@ -57,26 +58,25 @@ function wrapText(text, fontSize, maxWidth, charFactor) {
   return { lines, maxLineLength };
 }
 
-// Function now accepts configuration parameters as arguments with defaults
+// Function remains SYNCHRONOUS
 export function generateMarkdownPage(
   centerX,
   centerY,
   markdownText,
-  BOARD_DATA_KEY,
-  // New Configurable Parameters with current defaults
+  BOARD_DATA_KEY, // New Configurable Parameters with current defaults
   baseWidth = 650,
   paddingLeft = 40,
   paddingRight = 20,
   charFactor = 0.6
 ) {
-  // --- Get current boardId from localStorage (unchanged) ---
+  // --- Get current boardId from URL (remains synchronous) ---
   const params = new URLSearchParams(window.location.search);
   const boardId = params.get("id");
 
   if (!boardId) {
     console.warn(
       "generateMarkdownPage: no boardId found, cannot save markdown"
-    );
+    ); // Continue element generation but skip save call later
   }
 
   if (typeof markdownText !== "string") {
@@ -90,9 +90,8 @@ export function generateMarkdownPage(
 
   markdownText = markdownText.replace(/\\n/g, "\n");
 
-  const groupId = generateGroupId();
+  const groupId = generateGroupId(); // Content width starts with the space provided by the base width minus the configured paddings
 
-  // Content width starts with the space provided by the base width minus the configured paddings
   let maxContentWidth = baseWidth - paddingLeft - paddingRight;
 
   const jitterX = (Math.random() - 0.5) * 2;
@@ -133,18 +132,15 @@ export function generateMarkdownPage(
       processedLines.push({ type: "hr" });
       contentHeight += 20;
       return;
-    }
+    } // Pass the current maxContentWidth AND charFactor for wrapping
 
-    // Pass the current maxContentWidth AND charFactor for wrapping
     const wrapResult = wrapText(line, fontSize, maxContentWidth, charFactor);
     const wrappedLines = wrapResult.lines;
-    const maxLineLength = wrapResult.maxLineLength;
+    const maxLineLength = wrapResult.maxLineLength; // Calculate the width required for the longest line/word using the consistent factor
 
-    // Calculate the width required for the longest line/word using the consistent factor
     const approxCharWidth = fontSize * charFactor;
-    const requiredLineWidth = maxLineLength * approxCharWidth;
+    const requiredLineWidth = maxLineLength * approxCharWidth; // Update the overall maximum required content width
 
-    // Update the overall maximum required content width
     maxContentWidth = Math.max(maxContentWidth, requiredLineWidth);
 
     processedLines.push({
@@ -157,19 +153,16 @@ export function generateMarkdownPage(
     contentHeight += wrappedLines.length * (fontSize + LINE_SPACING);
 
     if (fontSize === 36) contentHeight += 10;
-  });
+  }); // Calculate the final page width, using the base width as the minimum
 
-  // Calculate the final page width, using the base width as the minimum
   const finalPageWidth = Math.max(
     baseWidth,
     maxContentWidth + paddingLeft + paddingRight // Max content + configured margins
-  );
+  ); // Use paddingLeft for top/bottom margin consistency
 
-  // Use paddingLeft for top/bottom margin consistency
   const pageHeight = contentHeight + paddingLeft;
-  const topY = safeCenterY - pageHeight / 2;
+  const topY = safeCenterY - pageHeight / 2; // Calculate element positions based on the final, potentially wider, page
 
-  // Calculate element positions based on the final, potentially wider, page
   const contentWidth = finalPageWidth - paddingLeft - paddingRight; // The actual width available for text
   const pageRectLeftX = safeCenterX - finalPageWidth / 2;
   const textStartX = pageRectLeftX + paddingLeft; // Align the text content 'paddingLeft' away from the left edge
@@ -242,50 +235,18 @@ export function generateMarkdownPage(
 
       if (item.fontSize === 36) currentY += 10;
     }
-  });
+  }); // -------------------------------------------------------------------------------- // 🔑 REPLACED localStorage SNIPPET with ASYNCHRONOUS saveMarkdownToRegistry call // --------------------------------------------------------------------------------
 
-  // --- SAVE TO boardsData (unchanged) ---
-  if (boardId) {
-    try {
-      // Load all boards
-      const boardDataRaw = localStorage.getItem(BOARD_DATA_KEY);
-      const boardsData = boardDataRaw ? JSON.parse(boardDataRaw) : {};
-
-      // Ensure board exists
-      const oldBoard = boardsData[boardId] || {};
-
-      // Preserve all existing sections exactly as handleSave() expects
-      const newRegistry = {
-        ...(oldBoard.markdown_registry || {}),
-        [groupId]: {
-          id: groupId,
-          text: markdownTextRaw,
-        },
-      };
-
-      const updatedBoard = {
-        ...oldBoard,
-        elements: oldBoard.elements || [],
-        files: oldBoard.files || {},
-        appState: oldBoard.appState || {},
-        markdown_registry: newRegistry,
-
-        // keep hashes untouched — handleSave() recalculates them
-        elements_hash: oldBoard.elements_hash,
-        files_hash: oldBoard.files_hash,
-        appState_hash: oldBoard.appState_hash,
-        markdown_hash: oldBoard.markdown_hash,
-      };
-
-      boardsData[boardId] = updatedBoard;
-
-      localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
-
-      console.log(`Markdown saved to board ${boardId}`, groupId);
-    } catch (e) {
-      console.error("Failed to save markdown to registry", e);
-    }
-  }
+  if (boardId && BOARD_DATA_KEY) {
+    // Call the 'Fire-and-Forget' function. It executes the async IndexedDB operations
+    // in the background without blocking the return of 'elements'.
+    saveMarkdownToRegistry({
+      boardId: boardId,
+      groupId: groupId,
+      markdownTextRaw: markdownTextRaw,
+      BOARD_DATA_KEY: BOARD_DATA_KEY,
+    });
+  } // Return the elements immediately, allowing the calling context to proceed.
 
   return elements;
 }

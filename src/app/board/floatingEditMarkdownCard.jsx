@@ -205,9 +205,7 @@ export default function FloatingEditMarkdownCard({
 
   const handleSave = () => {
     const sanitized = sanitizeMarkdown(markdownContent);
-    deleteMarkdown();
     drawExcalidrawElements("markdown", sanitized, BOARD_DATA_KEY);
-    onClose?.();
   };
 
   return (
@@ -336,7 +334,11 @@ export default function FloatingEditMarkdownCard({
           {/* RIGHT GROUP: Contains only Update/Save button (Far Right) - Still uses items-center for internal alignment with shortcut */}
           <div className="flex flex-col items-center">
             <button
-              onClick={handleSave}
+              onClick={() => {
+                deleteMarkdown();
+                handleSave();
+                onClose();
+              }}
               className="px-4 py-2 rounded-md cursor-pointer bg-[#007acc] text-white hover:bg-[#0090ff] text-base font-outfit flex items-center gap-2 transition-colors">
               <Save className="w-4 h-4" />
               Update Markdown

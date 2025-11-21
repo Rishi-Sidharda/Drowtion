@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { ICONS, FOLDER_COLORS } from "@/lib/settings";
@@ -17,22 +17,29 @@ import DeleteFolderModal from "./modals/DeleteFolderModal";
 import ProfilePage from "./sections/ProfileSection";
 import BoardSearch from "./modals/BoardSearchModal";
 
+// --- IMPORT NEW ASYNCHRONOUS STORAGE FUNCTIONS ---
+// Assuming these are in a separate file (e.g., /lib/dashboardStorage.js)
+import {
+  loadDashboardData,
+  saveDashboardMetadata,
+  deleteBoardFromDashboard,
+} from "@/lib/dashboardStorage";
+
 export default function DashboardPage() {
   const router = useRouter();
+
   // app state
   const [user, setUser] = useState(null);
-
-  // ADDED: State for the user's profile data from the 'profiles' table
   const [userProfile, setUserProfile] = useState(null);
-  // ADDED: State to track if the initial user/profile data is loading
   const [loadingUser, setLoadingUser] = useState(true);
   const [data, setData] = useState({
     folders: {},
     boards: {},
     ui: { collapsedFolders: {} },
+    boardsData: {}, // This will still be loaded but is now part of the data state
   });
 
-  // UI state
+  // UI state (rest of UI state remains the same)
   const [boardMenuState, setBoardMenuState] = useState({
     open: false,
     x: 0,
@@ -45,17 +52,14 @@ export default function DashboardPage() {
     y: 0,
     folderId: null,
   });
-
   const [editingBoardId, setEditingBoardId] = useState(null);
   const [newBoardName, setNewBoardName] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [editingIconId, setEditingIconId] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropDownSelectedId, setDropDownSelectedId] = useState("all");
-
   const [profilePageVisibility, setProfilePageVisibility] = useState(false);
   const [boardLoading, setBoardLoading] = useState(false);
-
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [editFolderModalOpen, setEditFolderModalOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -69,211 +73,49 @@ export default function DashboardPage() {
     color: "#8B5CF6",
   });
 
-  // context: when user clicks a folder in sidebar, this becomes selected; new boards created while selected go into that folder
   const [selectedFolderId, setSelectedFolderId] = useState("none");
-
   const availableIcons = Object.keys(ICONS);
 
-  // --- MODIFIED: Initial state is null, will be set after auth ---
+  // Keys for IndexedDB
   const [STORAGE_KEY, SET_STORAGE_KEY] = useState(null);
   const [BOARD_DATA_KEY, SET_BOARD_DATA_KEY] = useState(null);
-  // ----------------------------------------------------------------
 
-  function loadFromStorage() {
-    if (!STORAGE_KEY || !BOARD_DATA_KEY) {
-      // Return default data if keys are not ready
-      return {
-        folders: {},
-        boards: {},
-        ui: { collapsedFolders: {} },
-        boardsData: {},
-        userId: null,
-      };
-    }
+  // ----------------------- ASYNCHRONOUS STORAGE HANDLERS -----------------------
 
-    try {
-      const tenshinRaw = localStorage.getItem(STORAGE_KEY);
-      const boardsDataRaw = localStorage.getItem(BOARD_DATA_KEY);
-      const boardsData = boardsDataRaw ? JSON.parse(boardsDataRaw) : {};
+  /**
+   * Replaces saveToStorage. Uses useCallback to ensure function stability.
+   * Only saves the metadata part to tenshinStore.
+   */
+  const saveMetadata = useCallback(
+    async (newData) => {
+      if (!STORAGE_KEY) return; // Guard clause
 
-      if (tenshinRaw) {
-        const parsed = JSON.parse(tenshinRaw);
-        const folders = parsed.folders || {};
-        const boards = parsed.boards || {};
-        const ui = parsed.ui || { collapsedFolders: {} };
-
-        // ensure folders have arrays + expanded default
-        Object.keys(folders).forEach((fid) => {
-          if (!Array.isArray(folders[fid].boards)) folders[fid].boards = [];
-          if (folders[fid].expanded === undefined) folders[fid].expanded = true;
-        });
-
-        // --- MODIFIED: Return userId from storage ---
-        return { folders, boards, ui, boardsData, userId: parsed.userId };
-        // --------------------------------------------
-      }
-
-      // --- Migration from old "boards" key (Only runs if new user-specific keys are empty) ---
-      const oldRaw = localStorage.getItem("boards");
-      if (oldRaw) {
-        const oldParsed = JSON.parse(oldRaw);
-        const boards = {};
-        const newBoardsData = {};
-
-        Object.keys(oldParsed).forEach((id) => {
-          const board = oldParsed[id];
-          boards[id] = {
-            id,
-            name: board.name || "Untitled Board",
-            icon: board.icon || "Brush",
-            folderId: board.folderId || null,
-            isFavorite: board.isFavorite || false,
-            updatedAt: board.updatedAt || new Date().toISOString(),
-          };
-          newBoardsData[id] = {
-            elements: board.elements || [],
-            appState: board.appState || {},
-            files: board.files || {},
-          };
-        });
-
-        const newTop = { folders: {}, boards, ui: { collapsedFolders: {} } };
-        const currentUserId = user ? user.id : "unknown-migrated";
-        // --- MODIFIED: Add userId to the migrated data before saving ---
-        const newTopWithId = { ...newTop, userId: currentUserId };
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newTopWithId));
-        localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(newBoardsData));
-
-        try {
-          localStorage.removeItem("boards");
-        } catch (e) {}
-
-        // --- MODIFIED: Return userId for state ---
-        return {
-          folders: {},
-          boards,
-          ui: { collapsedFolders: {} },
-          boardsData: newBoardsData,
-          userId: currentUserId,
-        };
-        // -------------------------------------------
-      }
-
-      // nothing found
-      // --- MODIFIED: Return current user ID if nothing found ---
-      return {
-        folders: {},
-        boards: {},
-        ui: { collapsedFolders: {} },
-        boardsData: {},
-        userId: user ? user.id : null,
-      };
-      // ---------------------------------------------------------
-    } catch (e) {
-      console.error("loadFromStorage error", e);
-      // --- MODIFIED: Return current user ID on error ---
-      return {
-        folders: {},
-        boards: {},
-        ui: { collapsedFolders: {} },
-        boardsData: {},
-        userId: user ? user.id : null,
-      };
-      // -------------------------------------------------
-    }
-  }
-
-  function saveToStorage({ folders, boards, ui }) {
-    if (!STORAGE_KEY) return; // Guard clause: do nothing if keys aren't set
-
-    try {
-      // Load existing tenshin data to preserve anything not included in the update
-      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-        boards: {},
-        folders: {},
-        ui: { collapsedFolders: {} },
-        // --- MODIFIED: Ensure existing structure has userId ---
-        userId: user ? user.id : null,
+      // 1. Prepare metadata object
+      const metadata = {
+        folders: newData.folders,
+        boards: newData.boards,
+        ui: newData.ui,
       };
 
-      const merged = {
-        // --- ADDED: Ensure userId is always saved ---
-        userId: existing.userId || (user ? user.id : null),
-        // ---------------------------------------------
-        folders: folders ?? existing.folders,
-        boards: boards ?? existing.boards,
-        ui: ui ?? existing.ui,
-      };
-
-      // Write only the tenshin metadata (NO boardData here)
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-
-      // Update app state
-      setData((currentData) => ({
-        ...currentData, // Keep boardsData intact
-        folders: merged.folders,
-        boards: merged.boards,
-        ui: merged.ui,
-        // userId doesn't need to be in the main data state, but is now in local storage
-      }));
-    } catch (e) {
-      console.error("saveToStorage error", e);
-    }
-  }
-
-  const deleteBoard = (id) => {
-    const newData = {
-      folders: { ...(data.folders || {}) },
-      boards: { ...(data.boards || {}) },
-      ui: { ...(data.ui || { collapsedFolders: {} }) },
-    };
-    const board = newData.boards[id];
-    if (!board) return;
-
-    // Remove board ID from any folder list
-    Object.keys(newData.folders).forEach((fid) => {
-      const f = { ...newData.folders[fid] };
-      if (Array.isArray(f.boards) && f.boards.includes(id)) {
-        f.boards = f.boards.filter((b) => b !== id);
-        newData.folders[fid] = f;
-      }
-    });
-
-    delete newData.boards[id];
-    if (BOARD_DATA_KEY) {
       try {
-        const boardsDataRaw = localStorage.getItem(BOARD_DATA_KEY);
-        const boardsData = boardsDataRaw ? JSON.parse(boardsDataRaw) : {};
-        delete boardsData[id];
-        localStorage.setItem(BOARD_DATA_KEY, JSON.stringify(boardsData));
+        // 2. Write to IndexedDB
+        await saveDashboardMetadata({ metadata, STORAGE_KEY, user });
+
+        // 3. Update local state
+        setData((currentData) => ({
+          ...currentData, // Keep boardsData intact
+          ...metadata,
+        }));
       } catch (e) {
-        console.error("Failed to delete board data from storage", e);
+        console.error("saveMetadata error", e);
       }
-    }
-
-    saveToStorage(newData);
-    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
-  };
-
-  // ----------------------- DERIVED LISTS -----------------------
-  const allBoardsArray = Object.keys(data.boards || {}).map((id) => ({
-    id,
-    ...data.boards[id],
-  }));
-  const sortedBoards = allBoardsArray.sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
-  const recentBoards = sortedBoards.slice(0, 12);
-  const favorites = sortedBoards.filter((b) => b.isFavorite);
-  const folderList = Object.values(data.folders || {}).sort((a, b) =>
-    a.name.localeCompare(b.name)
+    },
+    [STORAGE_KEY, user]
   );
 
-  const noFolderBoards = sortedBoards.filter((b) => !b.folderId);
+  // ----------------------- BOARD CRUD -----------------------
 
-  // -----------------------------------------------------------------------------
-  const createNewBoard = () => {
+  const createNewBoard = useCallback(() => {
     const id = crypto.randomUUID();
     const assignedFolderId = selectedFolderId || null;
 
@@ -286,14 +128,10 @@ export default function DashboardPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    // Note: boardData is implicitly handled by the dashboard logic but not saved via saveToStorage
-    // We assume the board component will save the actual elements data under the BOARD_DATA_KEY
-    // For the dashboard metadata save:
     const newData = {
       folders: { ...(data.folders || {}) },
       boards: { ...(data.boards || {}), [id]: newMeta },
       ui: { ...(data.ui || { collapsedFolders: {} }) },
-      // boardsData is intentionally omitted here as saveToStorage doesn't handle it
     };
 
     if (assignedFolderId && newData.folders[assignedFolderId]) {
@@ -302,109 +140,128 @@ export default function DashboardPage() {
       newData.folders[assignedFolderId] = f;
     }
 
-    saveToStorage(newData);
-  };
+    // Use the new async save function
+    saveMetadata(newData);
+  }, [data.folders, data.boards, data.ui, selectedFolderId, saveMetadata]);
 
-  const openBoard = (id) => {
-    setBoardLoading(true);
-    router.push(`/board?id=${encodeURIComponent(id)}`);
-  };
-
-  const startRenaming = (id, currentName) => {
-    setEditingBoardId(id);
-    setNewBoardName(currentName || "");
-    setErrorMessage("");
-    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
-  };
-
-  const saveBoardName = (id) => {
-    const trimmed = (newBoardName || "").trim();
-    if (!trimmed) {
-      setErrorMessage("Board name cannot be empty.");
-      return;
-    }
-    const newData = { ...data, boards: { ...(data.boards || {}) } };
-    if (!newData.boards[id]) return;
-    newData.boards[id].name = trimmed;
-    // boardsData is now correctly left out of saveToStorage argument
-    saveToStorage(newData);
-    setEditingBoardId(null);
-    setErrorMessage("");
-  };
-
-  const startEditingIcon = (id) => {
-    setEditingIconId(id);
-    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
-  };
-
-  const saveIcon = (id, iconName) => {
-    const newData = { ...data, boards: { ...(data.boards || {}) } };
-    if (!newData.boards[id]) return;
-    newData.boards[id].icon = iconName;
-    saveToStorage(newData);
-    setEditingIconId(null);
-  };
-
-  const toggleFavorite = (id) => {
-    const newData = { ...data, boards: { ...(data.boards || {}) } };
-    if (!newData.boards[id]) return;
-    newData.boards[id].isFavorite = !newData.boards[id].isFavorite;
-    saveToStorage(newData);
-    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
-  };
-
-  const moveBoardToFolder = (boardId, folderId) => {
-    const newData = {
-      boards: { ...(data.boards || {}) },
-      folders: { ...(data.folders || {}) },
-      ui: { ...(data.ui || { collapsedFolders: {} }) },
-    };
-    const board = newData.boards[boardId];
-    if (!board) return;
-
-    const prevFolderId = board.folderId || null;
-    if ((prevFolderId || null) === (folderId || null)) {
-      setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
-      return;
-    }
-
-    // Remove from previous folder
-    Object.keys(newData.folders).forEach((fid) => {
-      const f = { ...newData.folders[fid] };
-      if (Array.isArray(f.boards) && f.boards.includes(boardId)) {
-        f.boards = f.boards.filter((b) => b !== boardId);
-        newData.folders[fid] = f;
+  const saveBoardName = useCallback(
+    (id) => {
+      const trimmed = (newBoardName || "").trim();
+      if (!trimmed) {
+        setErrorMessage("Board name cannot be empty.");
+        return;
       }
-    });
+      const newData = { ...data, boards: { ...(data.boards || {}) } };
+      if (!newData.boards[id]) return;
+      newData.boards[id].name = trimmed;
 
-    // Update board metadata
-    newData.boards[boardId] = {
-      ...board,
-      folderId: folderId || null,
-    };
+      // Use the new async save function
+      saveMetadata(newData);
+      setEditingBoardId(null);
+      setErrorMessage("");
+    },
+    [data, newBoardName, saveMetadata]
+  );
 
-    // Add to new folder
-    if (folderId && newData.folders[folderId]) {
-      const dest = { ...newData.folders[folderId] };
-      dest.boards = Array.from(new Set([...(dest.boards || []), boardId]));
-      newData.folders[folderId] = dest;
-    }
+  const saveIcon = useCallback(
+    (id, iconName) => {
+      const newData = { ...data, boards: { ...(data.boards || {}) } };
+      if (!newData.boards[id]) return;
+      newData.boards[id].icon = iconName;
+      saveMetadata(newData);
+      setEditingIconId(null);
+    },
+    [data, saveMetadata]
+  );
 
-    saveToStorage(newData);
-    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
-  };
+  const toggleFavorite = useCallback(
+    (id) => {
+      const newData = { ...data, boards: { ...(data.boards || {}) } };
+      if (!newData.boards[id]) return;
+      newData.boards[id].isFavorite = !newData.boards[id].isFavorite;
+      saveMetadata(newData);
+      setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
+    },
+    [data, saveMetadata]
+  );
+
+  const moveBoardToFolder = useCallback(
+    (boardId, folderId) => {
+      const newData = {
+        boards: { ...(data.boards || {}) },
+        folders: { ...(data.folders || {}) },
+        ui: { ...(data.ui || { collapsedFolders: {} }) },
+      };
+      const board = newData.boards[boardId];
+      if (!board) return;
+
+      // ... (rest of moveBoardToFolder logic remains the same) ...
+      const prevFolderId = board.folderId || null;
+      if ((prevFolderId || null) === (folderId || null)) {
+        setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
+        return;
+      }
+
+      // Remove from previous folder
+      Object.keys(newData.folders).forEach((fid) => {
+        const f = { ...newData.folders[fid] };
+        if (Array.isArray(f.boards) && f.boards.includes(boardId)) {
+          f.boards = f.boards.filter((b) => b !== boardId);
+          newData.folders[fid] = f;
+        }
+      });
+
+      // Update board metadata
+      newData.boards[boardId] = {
+        ...board,
+        folderId: folderId || null,
+      };
+
+      // Add to new folder
+      if (folderId && newData.folders[folderId]) {
+        const dest = { ...newData.folders[folderId] };
+        dest.boards = Array.from(new Set([...(dest.boards || []), boardId]));
+        newData.folders[folderId] = dest;
+      }
+
+      saveMetadata(newData);
+      setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
+    },
+    [data, saveMetadata]
+  );
+
+  /**
+   * Replaces the synchronous deleteBoard function with an asynchronous one.
+   */
+  const deleteBoard = useCallback(
+    async (id) => {
+      if (!STORAGE_KEY || !BOARD_DATA_KEY) return;
+
+      try {
+        const updatedMetadata = await deleteBoardFromDashboard({
+          boardId: id,
+          data,
+          STORAGE_KEY,
+          BOARD_DATA_KEY,
+        });
+
+        // Update local state with the returned metadata (folders, boards, ui)
+        setData((currentData) => ({
+          ...currentData,
+          ...updatedMetadata,
+        }));
+      } catch (e) {
+        console.error("Async deleteBoard failed:", e);
+      }
+
+      setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
+    },
+    [data, STORAGE_KEY, BOARD_DATA_KEY]
+  );
 
   // ----------------------- FOLDER CRUD -----------------------
-  const openCreateFolderModal = () => {
-    setFolderForm({
-      name: "New Folder",
-      icon: "Folder",
-      color: FOLDER_COLORS[0],
-    });
-    setCreateFolderModalOpen(true);
-  };
 
-  const createFolder = () => {
+  const createFolder = useCallback(() => {
     const name = (folderForm.name || "").trim() || "New Folder";
     const id = crypto.randomUUID();
     const newFolder = {
@@ -422,25 +279,12 @@ export default function DashboardPage() {
     };
     if (!newData.ui.collapsedFolders) newData.ui.collapsedFolders = {};
     newData.ui.collapsedFolders[id] = false; // false -> expanded
-    saveToStorage(newData);
+    saveMetadata(newData);
     setCreateFolderModalOpen(false);
     setSelectedFolderId(id);
-  };
+  }, [data, folderForm, saveMetadata]);
 
-  const openEditFolderModal = (folderId) => {
-    const f = data.folders[folderId];
-    if (!f) return;
-    setFolderForm({
-      name: f.name,
-      icon: f.icon || "Folder",
-      color: f.color || FOLDER_COLORS[0],
-    });
-    setEditFolderModalOpen(true);
-    setFolderMenuState({ open: false, x: 0, y: 0, folderId: null });
-    setSelectedFolderId(folderId);
-  };
-
-  const saveEditFolder = () => {
+  const saveEditFolder = useCallback(() => {
     const id = selectedFolderId;
     if (!id) return;
     const name = (folderForm.name || "").trim();
@@ -452,17 +296,12 @@ export default function DashboardPage() {
       icon: folderForm.icon,
       color: folderForm.color,
     };
-    saveToStorage(newData);
+    saveMetadata(newData);
     setEditFolderModalOpen(false);
     setSelectedFolderId(null);
-  };
+  }, [data, selectedFolderId, folderForm, saveMetadata]);
 
-  const confirmDeleteFolder = (folderId) => {
-    setDeleteFolderConfirm({ open: true, folderId });
-    setFolderMenuState({ open: false, x: 0, y: 0, folderId: null });
-  };
-
-  const deleteFolder = () => {
+  const deleteFolder = useCallback(() => {
     const id = deleteFolderConfirm.folderId;
     if (!id) return;
     const newData = {
@@ -488,19 +327,28 @@ export default function DashboardPage() {
       newData.ui.collapsedFolders = cf;
     }
 
-    saveToStorage(newData);
+    saveMetadata(newData);
     setDeleteFolderConfirm({ open: false, folderId: null });
-    if (selectedFolderId === id) setSelectedFolderId(null);
-  };
+    if (selectedFolderId === id) setSelectedFolderId("none");
+  }, [data, deleteFolderConfirm.folderId, selectedFolderId, saveMetadata]);
 
-  const handleSearch = () => {
-    setSearchOpen(true);
-  };
-
-  // --------------------------------------------------------------------------------------------------
+  const toggleFolderCollapse = useCallback(
+    (folderId) => {
+      const newUi = {
+        ...(data.ui || { collapsedFolders: {} }),
+        collapsedFolders: { ...(data.ui?.collapsedFolders || {}) },
+      };
+      const current = newUi.collapsedFolders[folderId];
+      newUi.collapsedFolders[folderId] = !current;
+      const newData = { ...data, ui: newUi };
+      saveMetadata(newData);
+    },
+    [data, saveMetadata]
+  );
 
   // ----------------------- INITIAL LOAD & AUTH -----------------------
-  // ----------------------- INITIAL LOAD & AUTH -----------------------
+
+  // Authentication and Key Setting (Remains the same)
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -525,38 +373,116 @@ export default function DashboardPage() {
           SET_STORAGE_KEY(`tenshin-${userId}`);
           SET_BOARD_DATA_KEY(`boardData-${userId}`);
         } else {
-          // Redirect if not logged in
           window.location.href = "/signin";
         }
       } catch (e) {
         console.error("supabase getUser failed", e);
       } finally {
-        // Set loading to false once the process is complete (success or failure)
         setLoadingUser(false);
       }
     };
     getUser();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // --- MODIFIED: Data loading now waits for user-specific keys ---
+  // --- MODIFIED: ASYNCHRONOUS Data loading waits for user-specific keys ---
   useEffect(() => {
+    // This runs only when the keys are available
     if (STORAGE_KEY && BOARD_DATA_KEY) {
-      const loaded = loadFromStorage();
-      setData(loaded);
+      const loadData = async () => {
+        const loaded = await loadDashboardData({
+          STORAGE_KEY,
+          BOARD_DATA_KEY,
+          user,
+        });
 
-      // Ensure UI state is initialized if missing
-      if (!loaded.ui || !loaded.ui.collapsedFolders) {
-        const newData = { ...loaded, ui: { collapsedFolders: {} } };
-        // Save immediately to fix the UI structure if it's broken/missing
-        saveToStorage(newData);
-      }
+        setData(loaded);
+
+        // Ensure UI state is initialized if missing
+        if (!loaded.ui || !loaded.ui.collapsedFolders) {
+          const newData = { ...loaded, ui: { collapsedFolders: {} } };
+          // Save immediately to fix the UI structure if it's broken/missing
+          await saveDashboardMetadata({
+            metadata: newData,
+            STORAGE_KEY,
+            user,
+          });
+        }
+      };
+      loadData();
     }
-  }, [STORAGE_KEY, BOARD_DATA_KEY]);
+  }, [STORAGE_KEY, BOARD_DATA_KEY, user]);
   // -------------------------------------------------------------
+
+  // ----------------------- DERIVED LISTS -----------------------
+  // ... (Derived lists remain the same) ...
+  const allBoardsArray = Object.keys(data.boards || {}).map((id) => ({
+    id,
+    ...data.boards[id],
+  }));
+  const sortedBoards = allBoardsArray.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+  const recentBoards = sortedBoards.slice(0, 12);
+  const favorites = sortedBoards.filter((b) => b.isFavorite);
+  const folderList = Object.values(data.folders || {}).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+  const noFolderBoards = sortedBoards.filter((b) => !b.folderId);
+
+  // ----------------------- OTHER HANDLERS -----------------------
+
+  const openBoard = (id) => {
+    setBoardLoading(true);
+    router.push(`/board?id=${encodeURIComponent(id)}`);
+  };
+
+  const startRenaming = (id, currentName) => {
+    setEditingBoardId(id);
+    setNewBoardName(currentName || "");
+    setErrorMessage("");
+    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
+  };
+
+  const startEditingIcon = (id) => {
+    setEditingIconId(id);
+    setBoardMenuState({ open: false, x: 0, y: 0, boardId: null });
+  };
+
+  const openCreateFolderModal = () => {
+    setFolderForm({
+      name: "New Folder",
+      icon: "Folder",
+      color: FOLDER_COLORS[0],
+    });
+    setCreateFolderModalOpen(true);
+  };
+
+  const openEditFolderModal = (folderId) => {
+    const f = data.folders[folderId];
+    if (!f) return;
+    setFolderForm({
+      name: f.name,
+      icon: f.icon || "Folder",
+      color: f.color || FOLDER_COLORS[0],
+    });
+    setEditFolderModalOpen(true);
+    setFolderMenuState({ open: false, x: 0, y: 0, folderId: null });
+    setSelectedFolderId(folderId);
+  };
+
+  const confirmDeleteFolder = (folderId) => {
+    setDeleteFolderConfirm({ open: true, folderId });
+    setFolderMenuState({ open: false, x: 0, y: 0, folderId: null });
+  };
+
+  const handleSearch = () => {
+    setSearchOpen(true);
+  };
 
   // ----------------------- HELPERS -----------------------
   function timeAgo(dateString) {
     if (!dateString) return "just now";
+    // ... (timeAgo logic remains the same) ...
     const date = new Date(dateString);
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
@@ -576,17 +502,6 @@ export default function DashboardPage() {
     }
     return "just now";
   }
-
-  const toggleFolderCollapse = (folderId) => {
-    const newUi = {
-      ...(data.ui || { collapsedFolders: {} }),
-      collapsedFolders: { ...(data.ui?.collapsedFolders || {}) },
-    };
-    const current = newUi.collapsedFolders[folderId];
-    newUi.collapsedFolders[folderId] = !current;
-    const newData = { ...data, ui: newUi };
-    saveToStorage(newData);
-  };
 
   // Menus
   const handleBoardMenuClick = (e, boardId) => {
