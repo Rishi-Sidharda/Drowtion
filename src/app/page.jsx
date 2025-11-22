@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import FloatingImage from "../components/ui/floatingImage";
 import Pricing from "./pricing/page";
 import Footer from "@/components/ui/footer";
 import { FaArrowUp, FaBars, FaTimes } from "react-icons/fa";
@@ -28,13 +27,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen w-full bg-[#121212] text-white font-sans relative">
-      {/* Floating Images */}
-      <FloatingImage src="file.svg" size={120} speed={0.7} />
-      <FloatingImage src="next.svg" size={120} speed={0.7} />
-      <FloatingImage src="vercel.svg" size={120} speed={0.7} />
-      <FloatingImage src="globe.svg" size={120} speed={0.7} />
-      <FloatingImage src="window.svg" size={120} speed={0.7} />
-
       {/* Navbar */}
       <nav className="flex items-center font-mono justify-between px-4 md:px-8 py-6 relative">
         {/* Logo */}

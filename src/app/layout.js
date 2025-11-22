@@ -19,14 +19,17 @@ const outfitSans = Outfit({
 export const metadata = {
   title: "Tenshin",
   description: "",
+  icons: {
+    icon: "/logo_sm.svg", // main icon
+    shortcut: "/logo_sm.svg", // optional
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${outfitSans.variable} antialiased`}
-      >
+        className={`${geistSans.variable} ${geistMono.variable} ${outfitSans.variable} antialiased`}>
         {children}
       </body>
     </html>
