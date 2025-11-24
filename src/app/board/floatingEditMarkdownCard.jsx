@@ -50,28 +50,34 @@ function MarkdownPreview({ text }) {
     if (/^>>\s?/.test(t))
       return (
         // Completely strip vertical margin
-        <div key={i} className="pl-1 text-red-400 my-0">
+        <div
+          key={i}
+          className="pl-1 wrap-break-words break-all text-red-400 my-0">
           {t.replace(/^>>\s?/, "")}
         </div>
       );
     if (/^>\s?/.test(t))
       return (
         // Completely strip vertical margin
-        <blockquote key={i} className="pl-1 text-[#bfbfbf] my-0">
+        <blockquote
+          key={i}
+          className="pl-1 wrap-break-words break-all text-[#bfbfbf] my-0">
           {t.replace(/^>\s?/, "")}
         </blockquote>
       );
     if (/^#\s?/.test(t))
       return (
         // Strip bottom margin completely
-        <h3 key={i} className="text-xl mt-4 mb-0">
+        <h3 key={i} className="text-xl wrap-break-words break-all mt-4 mb-0">
           {t.replace(/^#\s?/, "")}
         </h3>
       );
 
     // Paragraph or empty line content:
     return (
-      <div key={i} className="leading-relaxed my-[-10]">
+      <div
+        key={i}
+        className="leading-relaxed wrap-break-words break-all my-[-10]">
         {ln}
       </div>
     );

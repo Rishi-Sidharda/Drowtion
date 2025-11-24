@@ -4,16 +4,12 @@
 // as "Fire-and-Forget" in lib/storage.js to avoid requiring 'await').
 import { saveMarkdownToRegistry } from "@/lib/storage";
 
-const STORAGE_KEY = "tenshin";
-const BOARD_DATA_KEY = "boardData";
-
-import { useSearchParams } from "next/navigation";
-
 const LINE_SPACING = 10;
 
 const generateGroupId = () =>
   `markdown-${Math.random().toString(36).substr(2, 9)}`;
 
+// NOTE: wrapText logic remains unchanged.
 // NOTE: wrapText logic remains unchanged.
 function wrapText(text, fontSize, maxWidth, charFactor) {
   // Uses the passed-in charFactor for consistent line wrapping
@@ -25,17 +21,22 @@ function wrapText(text, fontSize, maxWidth, charFactor) {
   let maxLineLength = 0;
 
   words.forEach((word) => {
-    // 1. Handle extremely long words
+    // 1. Handle extremely long words: NOW breaks the word
     if (word.length > maxCharsPerLine) {
+      // Push any existing currentLine first
       if (currentLine) {
         lines.push(currentLine);
         maxLineLength = Math.max(maxLineLength, currentLine.length);
+      } // Break the long word into segments
+      for (let i = 0; i < word.length; i += maxCharsPerLine) {
+        const segment = word.substring(i, i + maxCharsPerLine);
+        lines.push(segment); // The maxLineLength should now be constrained by maxCharsPerLine
+        maxLineLength = Math.max(maxLineLength, segment.length);
       }
-      lines.push(word);
-      maxLineLength = Math.max(maxLineLength, word.length);
       currentLine = "";
       return;
-    } // 2. Original wrapping logic
+    }
+    // 2. Original wrapping logic (remains unchanged)
 
     const nextLine = currentLine + (currentLine ? " " : "") + word;
 
