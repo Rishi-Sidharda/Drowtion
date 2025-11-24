@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import Pricing from "./pricing/page";
 import Footer from "@/components/ui/footer";
 import { FaArrowUp, FaBars, FaTimes } from "react-icons/fa";
+import FloatingImage from "@/components/ui/floatingImage";
+import FloatingIcon from "@/components/ui/floatingIcon";
+import { Book, Dock, PaintBucket, WholeWord, Zap } from "lucide-react";
 
 export default function Home() {
   const [showScroll, setShowScroll] = useState(false);
@@ -27,6 +30,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen w-full bg-[#121212] text-white font-sans relative">
+      {/* <FloatingIcon IconComponent={Zap} />
+      <FloatingIcon IconComponent={Book} />
+      <FloatingIcon IconComponent={PaintBucket} />
+      <FloatingIcon IconComponent={Dock} /> */}
       {/* Navbar */}
       <nav className="flex items-center font-mono justify-between px-4 md:px-8 py-6 relative">
         {/* Logo */}
