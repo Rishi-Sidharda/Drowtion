@@ -177,7 +177,7 @@ export function generateMarkdownPage(
     strokeColor: "#000000",
     backgroundColor: "#ffffff",
     strokeWidth: 2,
-    roughness: 1,
+    roughness: 0,
     opacity: 100,
     groupIds: [groupId],
   };
