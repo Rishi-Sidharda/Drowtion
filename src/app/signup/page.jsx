@@ -107,7 +107,7 @@ export default function SignupPage() {
       <section>
         <div className="flex items-center bg-[#121212] justify-center min-h-screen">
           <div
-            className={`flex flex-1 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-mono`}>
+            className={`flex flex-1 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-sans`}>
             <div className="w-full max-w-xl bg-[#1a1a1a] rounded-2xl shadow-black shadow-2xl p-10">
               {/* === Combined Post-Signup Section === */}
               {showSuccessBanner && (
@@ -167,7 +167,9 @@ export default function SignupPage() {
                 <div className="w-8 h-8 bg-white rounded-full mr-2 flex items-center justify-center">
                   <img src="/logo_sm.svg" className="rounded-md" alt="" />
                 </div>
-                <p className="font-extrabold text-3xl text-white">Tenshin</p>
+                <p className="font-extrabold text-3xl font-mono text-white">
+                  Tenshin
+                </p>
               </div>
               <h3 className="mt-6 text-lg font-semibold text-white">
                 Create your Account
@@ -272,7 +274,7 @@ export default function SignupPage() {
                   {loading ? "Creating..." : "Create Account"}
                 </Button>
 
-                <h1 className="text-[#5a5a5a] font-mono text-sm pt-4">
+                <h1 className="text-[#5a5a5a] font-sans text-sm pt-4">
                   *By signing up, you agree to our{" "}
                   <a
                     href="/legal"

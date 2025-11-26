@@ -6,120 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CheckIcon, LogOut } from "lucide-react";
 
-/* -----------------------------------------
-   PRO FEATURES COMPONENT (embedded inline)
------------------------------------------- */
-
-function ProFeatures({ id, email }) {
-  // Check Icon component (unchanged)
-  const CheckIcon = ({ className = "" }) => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`w-5 h-5 ${className}`}>
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-
-  const [billing, setBilling] = useState("monthly");
-
-  const prices = {
-    monthly: {
-      price: "$4.99",
-      period: "/ month",
-      discount: null,
-    },
-    yearly: {
-      price: "$49.99",
-      period: "/ year",
-      discount: "(20% off)",
-    },
-  };
-
-  const proFeatures = [
-    "Everything in Free",
-    "Real-time cloud sync",
-    "Access from any device",
-    "Share boards via link",
-    "Priority email support",
-    "Fully Ad Free",
-  ];
-
-  const currentPrice = prices[billing];
-
-  return (
-    <div className="mt-8 p-6 bg-[#1a1a1a] border rounded-2xl border-[#2a2a2a] shadow-2xl max-w-lg">
-      {/* --- Pricing and Toggle Section --- */}
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 space-y-4 sm:space-y-0">
-        {/* Price Display: More prominent and professional */}
-        <div className="flex flex-col items-center sm:items-start">
-          <div className="flex items-baseline text-white font-mono">
-            <span className="text-6xl font-extrabold text-[#ff8383]">
-              {currentPrice.price}
-            </span>
-            <span className="text-xl opacity-80 ml-1">
-              {currentPrice.period}
-            </span>
-          </div>
-        </div>
-
-        {/* Toggle: Styled as a cleaner switch/pill-box */}
-        <div className="flex bg-[#2a2a2a] rounded-full p-1 shadow-inner">
-          <button
-            onClick={() => setBilling("monthly")}
-            className={`
-              px-4 py-2 rounded-full cursor-pointer font-mono text-sm transition-all duration-300 ease-in-out
-              ${
-                billing === "monthly"
-                  ? "bg-[#ff8383] text-black font-semibold shadow-md"
-                  : "text-white opacity-80 hover:bg-[#3a3a3a] hover:opacity-100"
-              }
-            `}>
-            Monthly
-          </button>
-
-          <button
-            onClick={() => setBilling("yearly")}
-            className={`
-              px-4 py-2 rounded-full cursor-pointer font-mono text-sm transition-all duration-300 ease-in-out
-              ${
-                billing === "yearly"
-                  ? "bg-[#ff8383] text-black font-semibold shadow-md"
-                  : "text-white opacity-80 hover:bg-[#3a3a3a] hover:opacity-100"
-              }
-            `}>
-            Yearly
-          </button>
-        </div>
-      </div>
-      {/* --- End Pricing and Toggle Section --- */}
-      <hr className="border-t border-[#2a2a2a] mb-6" />
-
-      <ul className="space-y-4">
-        {proFeatures.map((feature, idx) => (
-          <li key={idx} className="flex items-start">
-            <CheckIcon className="text-[#ff8383] mr-3 mt-1 shrink-0" />
-            <span className="text-white text-sm sm:text-base font-mono">
-              {feature}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-8 max-w-xl">
-        {/* Assuming Button is a component passed or defined elsewhere */}
-        <Button className="w-full bg-[#ff8383] hover:bg-[#c96a6a] text-black font-bold rounded-lg shadow-md px-4 py-3 cursor-pointer">
-          Upgrade to Pro
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 export default function ProfilePage({
   hideProfilePage,
   authUser,
@@ -257,8 +143,6 @@ export default function ProfilePage({
       {profile.plan === "free" && (
         <div className="pt-10 border-t border-[#2a2a2a] mt-10">
           <h2 className="text-2xl font-bold mb-4">Unlock These Pro Features</h2>
-
-          <ProFeatures id={authUser.id} email={authUser.email} />
         </div>
       )}
     </div>

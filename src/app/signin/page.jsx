@@ -67,7 +67,7 @@ export default function Signin() {
       <section>
         <div className="flex items-center bg-[#121212] justify-center min-h-screen">
           <div
-            className={`flex flex-1 z-20 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-mono`}>
+            className={`flex flex-1 z-20 flex-col justify-center items-center px-4 py-10 lg:px-6 ${geistMono.variable} font-sans`}>
             <div className="w-full max-w-xl bg-[#1a1a1a] rounded-2xl shadow-black shadow-2xl p-10">
               <div
                 onClick={() => {
@@ -77,9 +77,11 @@ export default function Signin() {
                 <div className="w-8 h-8 bg-white rounded-full mr-2 flex items-center justify-center">
                   <img src="/logo_sm.svg" className="rounded-md" alt="" />
                 </div>
-                <p className="font-extrabold text-3xl text-white">Tenshin</p>
+                <p className="font-extrabold font-mono text-3xl text-white">
+                  Tenshin
+                </p>
               </div>
-              <h3 className="mt-6 text-lg font-semibold text-white">
+              <h3 className="mt-6 text-lg font-normal text-white">
                 Sign in to your account
               </h3>
               <p className="mt-2 text-sm text-white">
